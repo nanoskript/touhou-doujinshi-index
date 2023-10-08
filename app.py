@@ -34,7 +34,12 @@ def build_book(book: int, language: str = None) -> BookData:
     query = IndexEntry.select().where(IndexEntry.book == book)
     if language:
         query = query.where(IndexEntry.language == language)
-    entries = list((query.order_by(IndexEntry.language, IndexEntry.date.desc())))
+
+    entries = list(query.order_by(
+        IndexEntry.language,
+        IndexEntry.date.desc(),
+        IndexEntry.title.desc(),
+    ))
 
     return BookData(
         title=book.title,
@@ -85,7 +90,7 @@ def build_full_query(
     # Sort by earliest entry present in book.
     return (query
             .group_by(IndexEntry.book)
-            .order_by(fn.Min(IndexEntry.date).desc()))
+            .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.title.desc()))
 
 
 @app.route("/")
