@@ -1,0 +1,51 @@
+{% macro render_pagination(route, page, total) %}
+    {% set spread_size = 1 %}
+    {% set spread_start = [1, page - spread_size] | max %}
+    {% set spread_end = [[page + spread_size, total] | min, 1] | max %}
+
+    <div style="margin: 3rem 0; display: flex; flex-direction: row; justify-content: center;">
+        <div class="pagination-link">
+            {% if 1 < page %}
+                <a href="{{ url_with('route_index', page=page - 1) }}">←</a>
+            {% else %}
+                ←
+            {% endif %}
+        </div>
+        {% if 1 < spread_start %}
+            <div class="pagination-link">
+                <a href="{{ url_with('route_index', page=1) }}">1</a>
+            </div>
+        {% endif %}
+        {% if 1 < spread_start - 1 %}
+            <div class="pagination-link">
+                …
+            </div>
+        {% endif %}
+        {% for i in range(spread_start, spread_end + 1) %}
+            <div class="pagination-link">
+                {% if i != page %}
+                    <a href="{{ url_with('route_index', page=i) }}">{{ i }}</a>
+                {% else %}
+                    {{ page }}
+                {% endif %}
+            </div>
+        {% endfor %}
+        {% if spread_end + 1 < total %}
+            <div class="pagination-link">
+                …
+            </div>
+        {% endif %}
+        {% if spread_end < total %}
+            <div class="pagination-link">
+                <a href="{{ url_with('route_index', page=total) }}">{{ total }}</a>
+            </div>
+        {% endif %}
+        <div class="pagination-link">
+            {% if page < total %}
+                <a href="{{ url_with('route_index', page=page + 1) }}">→</a>
+            {% else %}
+                →
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}

@@ -1,0 +1,78 @@
+{% extends "_base.html" %}
+{% from "_book.html" import render_book %}
+{% from "_pagination.html" import render_pagination %}
+
+{% block title %}
+    Page {{ page }}
+{% endblock %}
+
+{% block head %}
+    <meta property="og:description" content="{{ total_books }} {{ "result" if total_books == 1 else "results" }}."/>
+    {% if books %}
+        <meta property="og:image" content="{{ url_for('route_thumbnail', key=books[0].thumbnail_id) }}"/>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <form style="margin-top: 2rem;" action="/" method="get">
+        <div style="display: flex; gap: 1rem;">
+            <input name="title" class="form-control" placeholder="Search by title" value="{{ request.args.title }}"/>
+            <button type="Submit">Search</button>
+        </div>
+        <details style="margin: 1rem 0 2rem;">
+            <summary>
+                <span>Advanced options</span>
+                <b style="float: right;">
+                    {{ total_books }}
+                    {{ "result" if total_books == 1 else "results" }}.
+                </b>
+            </summary>
+            <div class="advanced-options-controls">
+                <div>
+                    <label>Include these characters:</label>
+                    <input name="include_characters" value="{{ request.args.include_characters }}"
+                           class="form-control"/>
+                    <small class="form-control-help">
+                        For example, <code>alice marisa</code> will only show results tagged with both Alice Margatroid
+                        and Kirisame Marisa.
+                    </small>
+                </div>
+                <div>
+                    <label>Include entries in this language:</label>
+                    <select name="language" class="form-control">
+                        <option></option>
+                        {% for language in languages %}
+                            <option {{ "selected" if language == request.args.language }}>
+                                {{ language }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-control-help">
+                        For example, selecting <code>English</code> will only show links to English translations.
+                    </small>
+                </div>
+                <div>
+                    <label>Exclude results that exist on this website:</label>
+                    <select name="exclude_on_source" class="form-control">
+                        <option></option>
+                        {% for key, name in sources.items() %}
+                            <option value="{{ key }}" {{ "selected" if key == request.args.exclude_on_source }}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-control-help">
+                        For example, selecting <code>Dynasty Scans</code> will hide results that contain any links to
+                        Dynasty Scans. Use this option if you've read everything on a particular site.
+                    </small>
+                </div>
+            </div>
+        </details>
+    </form>
+    <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+        {% for book in books %}
+            {{ render_book(book) }}
+        {% endfor %}
+    </div>
+    {{ render_pagination('route_index', page, total_pages) }}
+{% endblock %}

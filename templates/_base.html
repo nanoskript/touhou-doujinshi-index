@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}"/>
+    <title>{% block title %} ... {% endblock %} | Touhou Doujinshi Index</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='modern-normalize.css') }}" type="text/css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='sakura.css') }}" type="text/css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" type="text/css"/>
+    <meta property="og:title" content="{{ self.title() | trim }}"/>
+    <meta property="og:site_name" content="Touhou Doujinshi Index"/>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+<h1 style="text-align: center; margin: 3rem 0;">
+    <a href="/">Touhou Doujinshi Index</a>
+</h1>
+{% block body %}
+{% endblock %}
+<hr/>
+<footer style="margin: 2rem 0; text-align: center;">
+    Made by <a href="https://nanoskript.dev/">Nanoskript</a>
+    of <a href="https://sanaesbread.moe/">Sanae's Bread Scans</a>.
+</footer>
+</body>
+</html>

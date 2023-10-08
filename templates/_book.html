@@ -1,0 +1,40 @@
+{% macro render_book(book) %}
+    <div class="book-container">
+        <div class="book-container-thumbnail">
+            <div class="book-container-thumbnail-box">
+                <img src="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"/>
+            </div>
+        </div>
+        <div class="book-container-title">
+            <a href="/book/{{ book.entries[0].id }}">
+                <h3>{{ book.title | safe }}</h3>
+            </a>
+        </div>
+        <div class="book-container-main">
+            <div style="margin: 1rem 0;">
+                {% for character in book.characters %}
+                    <div class="tag tag-character">
+                        <a href="{{ url_for('route_index', include_characters=character) }}">
+                            {{ character }}
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                {% for entry in book.entries %}
+                    <div class="entry-box">
+                        <div>
+                            <a href="{{ entry.url }}">{{ entry.title | safe }}</a>
+                        </div>
+                        <div>
+                            <b>{{ entry.language }}</b> •
+                            <b>{{ entry | entry_readable_source }}</b> •
+                            <b>{{ entry.page_count }} pages</b> •
+                            <b title="{{ entry.date }}">{{ entry.date | age }}</b>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endmacro %}

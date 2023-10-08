@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+{% from "_book.html" import render_book %}
+
+{% block title %}
+    {{ book.title | safe }}
+{% endblock %}
+
+{% block head %}
+    <meta property="og:description" content="{{ build_description(book) }}"/>
+    <meta property="og:image" content="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"/>
+{% endblock %}
+
+{% block body %}
+    <div style="margin: 2.5rem 0;">
+        {{ render_book(book) }}
+    </div>
+{% endblock %}
