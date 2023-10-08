@@ -51,8 +51,11 @@ def main():
     db.connect()
     db.create_tables([EHEntry])
 
-    search_url = "https://e-hentai.org/?f_search=parody:%22touhou+project%24%22&f_cats=767&prev=1"
+    latest = list(EHEntry.select().order_by(EHEntry.gid.desc()).limit(1))
+    start_gid = latest[0].gid if latest else 1
+    search_url = f"https://e-hentai.org/?f_search=parody:%22touhou+project%24%22&f_cats=767&prev={start_gid}"
     while True:
+        print(f"[request] {search_url}")
         html = BeautifulSoup(requests.get(search_url, headers=HEADERS).content, features="html.parser")
 
         galleries = []
@@ -61,6 +64,9 @@ def main():
             if link.startswith("https://e-hentai.org/g/"):
                 [gid, token, _end] = link.split("/")[-3:]
                 galleries.append([int(gid), token])
+
+        if not galleries:
+            break
 
         metadata = requests.post(
             "https://api.e-hentai.org/api.php",
@@ -82,14 +88,15 @@ def main():
             thumbnail_url = gallery["thumb"].replace("l.jpg", "300.jpg")
             thumbnail = requests.get(thumbnail_url, headers=HEADERS).content
             EHEntry.create(gid=gid, data=gallery, thumbnail=thumbnail)
+            time.sleep(1)
 
         previous_url_element = html.find("a", attrs={"id": "uprev"})
         if previous_url_element is None:
             break
 
-        # Delay for 5 seconds.
+        # Delay for 10 seconds.
         search_url = previous_url_element.attrs.get("href", None)
-        time.sleep(5)
+        time.sleep(10)
 
 
 if __name__ == '__main__':
