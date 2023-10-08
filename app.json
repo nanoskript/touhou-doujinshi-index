@@ -1,0 +1,8 @@
+{
+  "cron": [
+    {
+      "command": "bash start_update.sh",
+      "schedule": "@daily"
+    }
+  ]
+}
