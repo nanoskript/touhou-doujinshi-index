@@ -64,13 +64,13 @@ def all_md_chapters() -> list[MDEntry]:
     for manga in MDManga.select():
         for chapter in manga.chapters:
             def chapter_title():
-                title = chapter["attributes"]["title"]
-                if title:
-                    if len(manga.chapters) > 1:
-                        return f"Chapter {chapter['attributes']['chapter']} - {title}"
-                    return title
-                elif len(manga.chapters) > 1:
-                    return f"Chapter {chapter['attributes']['chapter']}"
+                tokens = []
+                if chapter['attributes']['chapter']:
+                    tokens.append(f"Chapter {chapter['attributes']['chapter']}")
+                if chapter['attributes']['title']:
+                    tokens.append(chapter['attributes']['title'])
+                if tokens:
+                    return " - ".join(tokens)
 
                 manga_titles = manga.data["attributes"]["title"]
                 return list(manga_titles.values())[0]
