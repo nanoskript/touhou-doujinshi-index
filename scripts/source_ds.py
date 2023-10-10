@@ -24,6 +24,19 @@ class DSEntry(BaseModel):
     thumbnail = BlobField()
 
 
+def filter_ds_entries():
+    entries = []
+    for entry in DSEntry.select():
+        def is_nsfw():
+            for tag in entry.data["tags"]:
+                if tag["type"] == "General" and tag["name"] == "NSFW":
+                    return True
+
+        if not is_nsfw():
+            entries.append(entry)
+    return entries
+
+
 def ds_entry_characters(entry: DSEntry) -> list[str]:
     characters = []
     for tag in entry.data["tags"]:

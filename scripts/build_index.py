@@ -1,5 +1,6 @@
 from tqdm import tqdm
 
+from scripts.source_ds import filter_ds_entries
 from .character_index import CharacterIndex
 from .source_md import all_md_chapters
 from .entry import *
@@ -58,7 +59,7 @@ def main():
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
         tree.add_or_create(entry, similarity=0.9)
-    for entry in tqdm(DSEntry.select()):
+    for entry in tqdm(filter_ds_entries()):
         tree.add_or_create(entry, similarity=0.9)
     for entry in tqdm(all_md_chapters()):
         tree.add_or_create(entry, similarity=0.9)
