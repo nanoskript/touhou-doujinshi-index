@@ -14,8 +14,8 @@ class BookGroupImageNode:
     group: EntryList | None
 
 
-def node_distance(a: BookGroupImageNode, b: BookGroupImageNode):
-    return pybktree.hamming_distance(a.h8, b.h8)
+def node_distance(a: BookGroupImageNode, b: BookGroupImageNode) -> int:
+    return (a.h8 ^ b.h8).bit_count()
 
 
 class EntryListImageTree:
