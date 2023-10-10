@@ -88,7 +88,7 @@ def main():
             )
 
             book = IndexBook.create(
-                title=entry_title_clean(canonical),
+                title=entry_book_title(canonical),
                 thumbnail=thumbnail,
             )
 

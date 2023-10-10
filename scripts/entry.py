@@ -6,7 +6,7 @@ from typing import Union
 from .source_db import DBEntry, pool_translation_ratio
 from .source_ds import DSEntry, ds_entry_characters
 from .source_eh import EHEntry
-from .source_md import MDEntry
+from .source_md import MDEntry, md_manga_title
 
 Entry = Union[
     DBEntry,
@@ -52,16 +52,19 @@ def entry_title(entry: Entry) -> str:
         return entry.title
 
 
-def entry_title_clean(entry: Entry) -> str:
-    s = entry_title(entry)
+def entry_book_title(entry: Entry) -> str:
     if isinstance(entry, DBEntry):
+        s = entry_title(entry)
         s = s.removeprefix("Touhou -")
         s = s.removeprefix("東方 -")
         return s.strip()
     if isinstance(entry, EHEntry):
         brackets = r"(\s|\([^()]+\)|(\[[^\[\]]+])|(\{[^{}]+}))+$"
-        return re.sub(brackets, "", s)
-    return s
+        return re.sub(brackets, "", entry_title(entry))
+    if isinstance(entry, DSEntry):
+        return entry_title(entry)
+    if isinstance(entry, MDEntry):
+        return md_manga_title(entry.manga)
 
 
 def entry_thumbnails(entry: Entry) -> list[bytes]:

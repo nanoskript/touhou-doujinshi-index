@@ -59,6 +59,11 @@ MD_LANGUAGE_MAP = {
 }
 
 
+def md_manga_title(manga: MDManga) -> str:
+    manga_titles = manga.data["attributes"]["title"]
+    return list(manga_titles.values())[0]
+
+
 def all_md_chapters() -> list[MDEntry]:
     chapters = []
     for manga in MDManga.select():
@@ -71,9 +76,7 @@ def all_md_chapters() -> list[MDEntry]:
                     tokens.append(chapter['attributes']['title'])
                 if tokens:
                     return " - ".join(tokens)
-
-                manga_titles = manga.data["attributes"]["title"]
-                return list(manga_titles.values())[0]
+                return md_manga_title(manga)
 
             def chapter_language():
                 code = chapter["attributes"]["translatedLanguage"]
