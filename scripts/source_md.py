@@ -125,10 +125,15 @@ def scrape_manga():
 
         for entry in entries:
             slug = entry["id"]
-            if MDManga.get_or_none(MDManga.slug == slug):
-                print(f"[manga/skip] {slug}")
-                continue
-            print(f"[manga/new] {slug}")
+            manga = MDManga.get_or_none(MDManga.slug == slug)
+            if manga:
+                if manga.data == entry:
+                    print(f"[manga/skip] {slug}")
+                    continue
+                print(f"[manga/update] {slug}")
+                manga.delete_instance()
+            else:
+                print(f"[manga/new] {slug}")
 
             covers = []
             for relationship in entry["relationships"]:
