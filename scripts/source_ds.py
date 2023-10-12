@@ -55,11 +55,17 @@ def main():
         chapter_index = s.get(url, params={"page": page}, headers=HEADERS).json()
         for chapter in chapter_index["taggings"]:
             slug = chapter["permalink"]
-            if DSEntry.get_or_none(slug=slug):
-                print(f"[chapter/skip] {slug}")
-                continue
+            entry = DSEntry.get_or_none(slug=slug)
 
-            print(f"[chapter/new] {slug}")
+            if entry:
+                if entry.data["tags"] == chapter["tags"]:
+                    print(f"[chapter/skip] {slug}")
+                    continue
+                print(f"[chapter/update] {slug}")
+                entry.delete_instance()
+            else:
+                print(f"[chapter/new] {slug}")
+
             chapter_url = f"https://dynasty-scans.com/chapters/{slug}.json"
             chapter_data = s.get(chapter_url, headers=HEADERS).json()
             cover = s.get("https://dynasty-scans.com" + chapter_data["pages"][0]["url"]).content
