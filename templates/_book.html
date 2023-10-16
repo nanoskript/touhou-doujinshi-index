@@ -6,7 +6,7 @@
             </div>
         </div>
         <div class="book-container-title">
-            <a href="/book/{{ book.entries[0].id }}">
+            <a href="/book/{{ book.entries[0].id }}" rel="nofollow">
                 <h3>{{ book.title | safe }}</h3>
             </a>
         </div>
@@ -14,7 +14,7 @@
             <div style="margin: 1rem 0;">
                 {% for character in book.characters %}
                     <div class="tag tag-character">
-                        <a href="{{ url_for('route_index', include_characters=character) }}">
+                        <a href="{{ url_for('route_index', include_characters=character) }}" rel="nofollow">
                             {{ character }}
                         </a>
                     </div>
@@ -24,7 +24,9 @@
                 {% for entry in book.entries %}
                     <div class="entry-box">
                         <div>
-                            <a href="{{ entry.url }}">{{ entry.title | safe }}</a>
+                            <a href="{{ entry.url }}" rel="nofollow">
+                                {{ entry.title | safe }}
+                            </a>
                         </div>
                         <div>
                             <b>{{ entry.language }}</b> •
