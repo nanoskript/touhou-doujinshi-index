@@ -1,7 +1,5 @@
-from collections import defaultdict, Counter
-
 import requests
-from peewee import SqliteDatabase, Model, CharField, BlobField
+from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField
 from playhouse.sqlite_ext import JSONField
 
 from .utility import HEADERS
@@ -15,7 +13,7 @@ class BaseModel(Model):
 
 
 class DBEntry(BaseModel):
-    pool_id = CharField(unique=True)
+    pool_id = IntegerField(primary_key=True)
     data = JSONField()
     posts = JSONField()
     thumbnail = BlobField()
@@ -75,22 +73,42 @@ def all_pools():
         page += 1
 
 
+def gather_posts(post_ids: list[int]):
+    posts = []
+    limit = 200
+    for start in range(0, len(post_ids), limit):
+        print(f"[post/chunk] {start} / {len(post_ids)}")
+        ids = post_ids[start:start + limit]
+        posts += requests.get(
+            f"https://danbooru.donmai.us/posts.json",
+            headers=HEADERS,
+            params={
+                "tags": f"id:{','.join(map(str, ids))}",
+                "limit": limit,
+            },
+        ).json()
+
+    posts.sort(key=lambda p: post_ids.index(p["id"]))
+    return posts
+
+
 def scrape_pools():
     for data in all_pools():
         pool_id = data["id"]
         if not data["post_ids"]:
             continue
 
-        if DBEntry.select().where(DBEntry.pool_id == pool_id):
-            print(f"[pool/skip] {pool_id}")
-            continue
-        print(f"[pool/new] {pool_id}")
+        posts = gather_posts(data["post_ids"])
+        existing = DBEntry.get_or_none(pool_id=pool_id)
+        if existing:
+            if existing.data == data and existing.posts == posts:
+                print(f"[pool/skip] {pool_id}")
+                continue
 
-        posts = []
-        for index, post_id in enumerate(data["post_ids"]):
-            print(f"[post] {index} / {len(data['post_ids'])} ({post_id})")
-            post = requests.get(f"https://danbooru.donmai.us/posts/{post_id}.json", headers=HEADERS).json()
-            posts.append(post)
+            print(f"[pool/update] {pool_id}")
+            existing.delete_instance()
+        else:
+            print(f"[pool/new] {pool_id}")
 
         # Posts in pools can be walled.
         if "preview_file_url" not in posts[0]:
