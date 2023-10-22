@@ -28,6 +28,8 @@ def filter_eh_entries():
             continue
         if "[pixiv]" in entry.data["title"].lower():
             continue
+        if "●pixiv●" in entry.data["title"].lower():
+            continue
         yield entry
 
 
