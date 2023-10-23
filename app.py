@@ -83,10 +83,11 @@ def build_full_query(
                                 .where(IndexBookCharacter.character.contains(character)))
         query = query.where(IndexBook.id << books_with_character)
 
-    # Must occur after all other filtering options.
     if exclude_on_source:
-        filtered_books_with_source = query.where(IndexEntry.id.startswith(exclude_on_source))
-        query = query.where(~(IndexBook.id << filtered_books_with_source))
+        books_with_source = (IndexBook.select()
+                             .join(IndexEntry)
+                             .where(IndexEntry.id.startswith(exclude_on_source)))
+        query = query.where(~(IndexBook.id << books_with_source))
 
     # Sort by earliest entry present in book.
     return (query
