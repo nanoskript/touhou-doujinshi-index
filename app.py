@@ -1,7 +1,7 @@
 import dataclasses
+import datetime
 import io
 import math
-from datetime import datetime
 
 import peewee
 import timeago
@@ -50,8 +50,9 @@ def build_book(book: int, language: str = None) -> BookData:
 
 
 @app.template_filter("age")
-def template_age(date: datetime) -> str:
-    return timeago.format(date)
+def template_age(date: datetime.datetime) -> str:
+    now = datetime.datetime.now(datetime.timezone.utc)
+    return timeago.format(date, now=now)
 
 
 @app.template_filter("entry_readable_source")

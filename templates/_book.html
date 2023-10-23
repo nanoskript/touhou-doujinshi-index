@@ -32,7 +32,9 @@
                             <b>{{ entry.language }}</b> •
                             <b>{{ entry | entry_readable_source }}</b> •
                             <b>{{ entry.page_count }} pages</b> •
-                            <b title="{{ entry.date }}">{{ entry.date | age }}</b>
+                            <b title="{{ entry.date.strftime('%-d %B %Y') }}">
+                                {{ entry.date | age }}
+                            </b>
                         </div>
                     </div>
                 {% endfor %}

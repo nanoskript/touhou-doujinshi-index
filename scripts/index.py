@@ -1,7 +1,8 @@
 import dataclasses
 
-from peewee import SqliteDatabase, Model, CharField, BlobField, DateField, IntegerField, ForeignKeyField
+from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 
+from .date_time_utc_field import DateTimeUTCField
 from .entry import Entry
 
 db = SqliteDatabase("data/index.db")
@@ -36,7 +37,7 @@ class IndexEntry(BaseModel):
     book = ForeignKeyField(IndexBook)
     title = CharField()
     url = CharField()
-    date = DateField(index=True)
+    date = DateTimeUTCField(index=True)
     language = CharField(index=True)
     page_count = IntegerField()
 
