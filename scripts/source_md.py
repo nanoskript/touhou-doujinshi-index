@@ -20,6 +20,7 @@ class BaseModel(Model):
 class MDManga(BaseModel):
     slug = CharField(primary_key=True)
     data = JSONField()
+    covers = JSONField()
     chapters = JSONField()
     thumbnail = BlobField()
 
@@ -109,7 +110,6 @@ def manga_request(params):
         headers=HEADERS,
         params=params + [
             ("title", "Touhou"),
-            ("includes[]", "cover_art"),
             ("includes[]", "author"),
             ("includes[]", "artist"),
         ],
@@ -136,17 +136,28 @@ def scrape_manga():
             else:
                 print(f"[manga/new] {slug}")
 
-            covers = []
-            for relationship in entry["relationships"]:
-                if relationship["type"] == "cover_art":
-                    covers.append(relationship["attributes"]["fileName"])
+            covers = requests.get(
+                f"{BASE_URL}/cover",
+                headers=HEADERS,
+                params={
+                    "limit": limit,
+                    "manga[]": slug,
+                }
+            ).json()["data"]
 
             if not covers:
                 print(f"[manga/uncovered] {slug}")
                 continue
 
+            def cover_sort_key(c):
+                volume = c["attributes"]["volume"]
+                date = c["attributes"]["createdAt"]
+                return volume or date
+
+            first_cover = sorted(covers, key=cover_sort_key)[0]
+            cover_file = first_cover["attributes"]["fileName"]
             thumbnail = requests.get(
-                url=f"https://uploads.mangadex.org/covers/{slug}/{covers[0]}.256.jpg",
+                url=f"https://uploads.mangadex.org/covers/{slug}/{cover_file}.256.jpg",
                 headers=HEADERS,
             ).content
 
@@ -159,6 +170,7 @@ def scrape_manga():
             MDManga.create(
                 slug=slug,
                 data=entry,
+                covers=covers,
                 chapters=chapters,
                 thumbnail=thumbnail
             )
