@@ -64,7 +64,10 @@ def entry_book_title(entry: Entry) -> str:
     if isinstance(entry, DSEntry):
         return entry_title(entry)
     if isinstance(entry, MDEntry):
-        return md_manga_title(entry.manga)
+        s = md_manga_title(entry.manga)
+        s = s.removeprefix("Touhou -")
+        s = s.removesuffix("(Doujinshi)")
+        return s.strip()
 
 
 def entry_thumbnails(entry: Entry) -> list[bytes]:
