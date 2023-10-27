@@ -16,7 +16,7 @@ class BaseModel(Model):
 
 
 class EHEntry(BaseModel):
-    gid = IntegerField(unique=True)
+    gid = IntegerField(primary_key=True)
     data = JSONField()
     thumbnail = BlobField()
 
