@@ -56,6 +56,7 @@ MD_LANGUAGE_MAP = {
     "hu": "Hungarian",
     "th": "Thai",
     "tr": "Turkish",
+    "ar": "Arabic",
 }
 
 
