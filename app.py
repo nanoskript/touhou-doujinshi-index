@@ -80,7 +80,10 @@ def build_full_query(
 ):
     query = IndexBook.select(IndexBook.id).join(IndexEntry)
     if title:
-        query = query.where(IndexEntry.title.contains(title))
+        query = query.where(
+            IndexBook.title.contains(title) |
+            IndexEntry.title.contains(title)
+        )
     if language:
         query = query.where(IndexEntry.language == language)
 
