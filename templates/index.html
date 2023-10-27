@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block head %}
-    <meta property="og:description" content="{{ total_books }} {{ "result" if total_books == 1 else "results" }}."/>
+    <meta property="og:description" content="{{ pluralize(total_books, "result") }}."/>
     {% if books %}
         <meta property="og:image" content="{{ url_for('route_thumbnail', key=books[0].thumbnail_id) }}"/>
     {% endif %}
@@ -23,8 +23,7 @@
             <summary>
                 <span>Advanced options</span>
                 <b style="float: right;">
-                    {{ total_books }}
-                    {{ "result" if total_books == 1 else "results" }}.
+                    {{ pluralize(total_books, "result") }}.
                 </b>
             </summary>
             <div class="advanced-options-controls">

@@ -31,7 +31,7 @@
                         <div>
                             <b>{{ entry.language }}</b> •
                             <b>{{ entry | entry_readable_source }}</b> •
-                            <b>{{ entry.page_count }} pages</b> •
+                            <b>{{ pluralize(entry.page_count, "page") }}</b> •
                             <b title="{{ entry.date.strftime('%-d %B %Y') }}">
                                 {{ entry.date | age }}
                             </b>
