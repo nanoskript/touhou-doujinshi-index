@@ -17,9 +17,15 @@
     {% endblock %}
 </head>
 <body>
-<h1 style="text-align: center; margin: 3rem 0;">
-    <a href="/">Touhou Doujinshi Index</a>
-</h1>
+<header style="text-align: center; margin: 3rem 0;">
+    <h1 style="margin: 0;">
+        <a href="/">Touhou Doujinshi Index</a>
+    </h1>
+    <div style="margin: 1rem;">
+        <a href="{{ url_for('route_index') }}">Search</a> •
+        <a href="{{ url_for('route_about') }}">About</a>
+    </div>
+</header>
 {% block body %}
 {% endblock %}
 <hr/>

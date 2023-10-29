@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import io
+import json
 import math
 
 import peewee
@@ -165,6 +166,17 @@ def route_book(key: str):
 def route_thumbnail(key: str):
     data = IndexThumbnail.get_by_id(key).data
     return send_file(io.BytesIO(data), mimetype="octet-stream")
+
+
+@app.route("/about")
+def route_about():
+    with open("data/statistics.json", "r") as f:
+        statistics = json.load(f)
+
+    return render_template(
+        "about.html",
+        statistics=statistics,
+    )
 
 
 @app.errorhandler(peewee.OperationalError)

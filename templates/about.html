@@ -1,0 +1,79 @@
+{% extends "_base.html" %}
+
+{% block title %}
+    About
+{% endblock %}
+
+{% block head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly-finance.min.js"
+            integrity="sha512-toHM9/8SE9KMTjNeFa9SknHVwFvi/J2djW4SQBznsgutxNlbUs2eZh6xWZ5YI+hqJZStKgxHXN5DGdjIZ14aIg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endblock %}
+
+{% macro plot(name) %}
+    <div id="plot-{{ name }}" style="margin: 2rem 0;"></div>
+    <script type="module">
+      const config = {responsive: true};
+      const plot = JSON.parse({{ statistics[name] | tojson }});
+      Plotly.newPlot("plot-{{ name }}", plot.data, plot.layout, config);
+    </script>
+{% endmacro %}
+
+{% block body %}
+    <section>
+        <h2>About this site</h2>
+        <p>
+            This site provides a searchable database of links to translations of non-explicit Touhou doujinshi. Here,
+            <i>doujinshi</i> refers to self-published manga, magazines, and fan-works (though this term often
+            colloquially refers to explicit fan-works).
+        </p>
+        <p>
+            You can find the source code for this project on
+            <a href="https://github.com/nanoskript/touhou-doujinshi-index">GitHub</a>.
+            If you have any questions or comments, please consider joining the
+            <a href="https://discord.gg/5uXpn9f3pa">Sanae's Bread Discord server</a>.
+        </p>
+    </section>
+    <section>
+        <h2>Statistics</h2>
+        <p>
+            These graphs are updated automatically on a daily basis and only include data pertaining to non-explicit
+            Touhou works.
+        </p>
+        <section>
+            <h3>Number of translated works over time</h3>
+            {{ plot("languages") }}
+            <p>
+                Only the main languages are shown in this graph. This site predominantly pulls data from English
+                sources which means this graph is biased towards English translations and is not representative
+                of the Touhou translation space as a whole.
+            </p>
+        </section>
+        <section>
+            <h3>Number of uploads on websites over time</h3>
+            {{ plot("websites") }}
+            <p>
+                On Dynasty Scans, works go by a translation's release date, not its upload date. The release date
+                refers to when a translation was first published and accessible, which may include sites outside of
+                Dynasty Scans.
+            </p>
+        </section>
+        <section>
+            <h3>Common page counts in works</h3>
+            {{ plot("page-counts") }}
+            <p>
+                Only works with a page count of 100 or less are included in this histogram.
+            </p>
+        </section>
+        <section>
+            <h3>Character appearances over time</h3>
+            {{ plot("characters") }}
+            <p>
+                Only characters with more than 500 appearances are shown. This graph is based on the presence of
+                character tags on works, which may bias sites such as Dynasty Scans and Danbooru that tend to have more
+                character tags.
+            </p>
+        </section>
+    </section>
+{% endblock %}
+
