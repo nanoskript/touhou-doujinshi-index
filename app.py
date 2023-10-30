@@ -67,10 +67,12 @@ def url_with(route: str, **kwargs):
 
 
 @app.template_global()
-def pluralize(number: int, string: str) -> str:
+def pluralize(number: int, string: str, plural: str = None) -> str:
     if number == 1:
         return f"{number} {string}"
-    return f"{number} {string}s"
+    if not plural:
+        plural = f"{string}s"
+    return f"{number} {plural}"
 
 
 def build_full_query(
@@ -149,7 +151,7 @@ def route_index():
 @app.route("/book/<key>")
 def route_book(key: str):
     def build_description(b: BookData) -> str:
-        lines = [f"{pluralize(len(b.entries), 'entry')}."]
+        lines = [f"{pluralize(len(b.entries), 'entry', 'entries')}."]
         if b.characters:
             lines.append(f"Characters: {', '.join(b.characters)}.")
         return " ".join(lines)
