@@ -28,8 +28,8 @@ def entry_key(entry: Entry) -> str:
 
 
 ALL_SOURCE_TYPES = {
-    "db": "Danbooru",
     "eh": "EH",
+    "db": "Danbooru",
     "ds": "Dynasty Scans",
     "md": "MangaDex",
 }

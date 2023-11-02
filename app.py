@@ -24,7 +24,21 @@ class BookData:
     entries: list[IndexEntry]
 
 
-def build_book(book: int, language: str = None) -> BookData:
+@dataclasses.dataclass()
+class EntriesFilter:
+    language: str | None = None
+    exclude_sources: list[str] = dataclasses.field(default_factory=list)
+
+
+def filter_entries(query, f: EntriesFilter):
+    if f.language:
+        query = query.where(IndexEntry.language == f.language)
+    for source in f.exclude_sources:
+        query = query.where(~(IndexEntry.id.startswith(source)))
+    return query
+
+
+def build_book(book: int, f: EntriesFilter) -> BookData:
     book = IndexBook.get_by_id(book)
     characters = [str(row.character) for row in
                   (IndexBookCharacter.select()
@@ -33,8 +47,7 @@ def build_book(book: int, language: str = None) -> BookData:
                    .distinct())]
 
     query = IndexEntry.select().where(IndexEntry.book == book)
-    if language:
-        query = query.where(IndexEntry.language == language)
+    query = filter_entries(query, f)
 
     entries = list(query.order_by(
         IndexEntry.language,
@@ -63,7 +76,8 @@ def template_entry_readable_source(entry: IndexEntry) -> str:
 
 @app.template_global()
 def url_with(route: str, **kwargs):
-    return app.url_for(route, **{**request.args, **kwargs})
+    args = request.args.to_dict(flat=False)
+    return app.url_for(route, **{**args, **kwargs})
 
 
 @app.template_global()
@@ -77,18 +91,19 @@ def pluralize(number: int, string: str, plural: str = None) -> str:
 
 def build_full_query(
     title: str | None,
-    language: str | None,
     must_include_characters: list[str],
-    exclude_on_source: str | None,
+    exclude_on_sources: list[str],
+    exclude_on_language: str | None,
+    f: EntriesFilter,
 ):
     query = IndexBook.select(IndexBook.id).join(IndexEntry)
+    query = filter_entries(query, f)
+
     if title:
         query = query.where(
             IndexBook.title.contains(title) |
             IndexEntry.title.contains(title)
         )
-    if language:
-        query = query.where(IndexEntry.language == language)
 
     for character in must_include_characters:
         books_with_character = (IndexBook.select()
@@ -96,11 +111,20 @@ def build_full_query(
                                 .where(IndexBookCharacter.character.contains(character)))
         query = query.where(IndexBook.id << books_with_character)
 
-    if exclude_on_source:
+    for source in exclude_on_sources:
         books_with_source = (IndexBook.select()
                              .join(IndexEntry)
-                             .where(IndexEntry.id.startswith(exclude_on_source)))
+                             .where(IndexEntry.id.startswith(source)))
+        if f.language:
+            books_with_source = (books_with_source
+                                 .where(IndexEntry.language == f.language))
         query = query.where(~(IndexBook.id << books_with_source))
+
+    if exclude_on_language:
+        books_with_language = (IndexBook.select()
+                               .join(IndexEntry)
+                               .where(IndexEntry.language == exclude_on_language))
+        query = query.where(~(IndexBook.id << books_with_language))
 
     # Sort by earliest entry present in book.
     return (query
@@ -108,17 +132,35 @@ def build_full_query(
             .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.title.desc()))
 
 
+def build_language_groups() -> list[tuple[str, list[str]]]:
+    common = ["Japanese", "English", "Chinese", "Spanish"]
+    special = ["Speechless", "Text Cleaned"]
+
+    other = [row.language for row in
+             IndexEntry.select(IndexEntry.language)
+             .where(~(IndexEntry.language << (common + special)))
+             .distinct().order_by(IndexEntry.language)]
+
+    return [
+        ("Common", common),
+        ("Special", special),
+        ("Other", other),
+    ]
+
+
 @app.route("/")
 def route_index():
-    page = int(request.args.get("page", 1))
-    language = request.args.get("language", None)
+    f = EntriesFilter(
+        language=request.args.get("language", None),
+        exclude_sources=request.args.getlist("exclude_source"),
+    )
 
-    # Build query.
     query = build_full_query(
         title=request.args.get("title", None),
-        language=language,
         must_include_characters=request.args.get("include_characters", "").split(),
-        exclude_on_source=request.args.get("exclude_on_source", None),
+        exclude_on_sources=request.args.getlist("exclude_on_source"),
+        exclude_on_language=request.args.get("exclude_on_language", None),
+        f=f,
     )
 
     # Calculate statistics.
@@ -128,14 +170,9 @@ def route_index():
 
     # Retrieve dataset.
     books = []
+    page = int(request.args.get("page", 1))
     for row in query.offset((page - 1) * limit).limit(limit):
-        books.append(build_book(row, language=language))
-
-    # Find all languages available.
-    languages = [row.language for row in
-                 IndexEntry.select(IndexEntry.language)
-                 .distinct()
-                 .order_by(IndexEntry.language)]
+        books.append(build_book(row, f))
 
     return render_template(
         "index.html",
@@ -143,7 +180,7 @@ def route_index():
         total_books=total_books,
         total_pages=total_pages,
         page=page,
-        languages=languages,
+        languages=build_language_groups(),
         sources=ALL_SOURCE_TYPES,
     )
 
@@ -159,7 +196,7 @@ def route_book(key: str):
     book = IndexEntry.get_by_id(key).book
     return render_template(
         "book.html",
-        book=build_book(book),
+        book=build_book(book, EntriesFilter()),
         build_description=build_description,
     )
 

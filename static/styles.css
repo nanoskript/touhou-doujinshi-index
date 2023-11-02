@@ -118,9 +118,20 @@ body {
 .advanced-options-controls {
     border: 0.2rem darkgray solid;
     margin: 1rem 0;
-    padding: 2rem;
+    padding: 2rem 2rem 1.5rem;
 
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+.checklist {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+}
+
+.checklist label {
+    margin-bottom: 0;
+    font-weight: unset;
 }
