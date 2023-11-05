@@ -33,12 +33,17 @@ def filter_db_entries():
     entries = []
     for entry in DBEntry.select().order_by(DBEntry.pool_id):
         explicit_count = 0
+        questionable_count = 0
         for post in entry.posts:
             if post["rating"] == "e":
                 explicit_count += 1
+            if post["rating"] == "q":
+                questionable_count += 1
 
         # Ignore explicit pools.
-        if explicit_count < 0.1 * len(entry.posts):
+        criteria_e = explicit_count < 0.1 * len(entry.posts)
+        criteria_q = questionable_count < 0.5 * len(entry.posts)
+        if criteria_e and criteria_q:
             entries.append(entry)
     return entries
 
