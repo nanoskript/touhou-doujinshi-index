@@ -119,6 +119,9 @@ def manga_request(params):
 def scrape_manga():
     offset = 0
     limit = 100
+    all_slugs = set()
+
+    # Retrieve all titles.
     while True:
         entries = manga_request([("limit", limit), ("offset", offset)])["data"]
         if not entries:
@@ -127,6 +130,8 @@ def scrape_manga():
         for entry in entries:
             slug = entry["id"]
             manga = MDManga.get_or_none(MDManga.slug == slug)
+            all_slugs.add(slug)
+
             if manga:
                 if manga.data == entry:
                     print(f"[manga/skip] {slug}")
@@ -177,6 +182,12 @@ def scrape_manga():
 
         # Slide offset.
         offset += limit
+
+    # Remove orphan titles.
+    for manga in MDManga.select():
+        if manga.slug not in all_slugs:
+            print(f"[manga/orphan] {manga.slug}")
+            manga.delete_instance()
 
 
 def request_with_retry(url):
