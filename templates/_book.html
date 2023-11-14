@@ -11,22 +11,34 @@
             </a>
         </h3>
         <div class="book-container-main">
-            <div style="margin: 1rem 0;">
-                {% for tag in book.tags %}
-                    <div class="tag tag-general">
-                        <a href="{{ url_for('route_index', include_tags=tag) }}" rel="nofollow">
-                            {{ tag }}
-                        </a>
-                    </div>
-                {% endfor %}
-                {% for character in book.characters %}
-                    <div class="tag tag-character">
-                        <a href="{{ url_for('route_index', include_characters=character) }}" rel="nofollow">
-                            {{ character }}
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
+            {% if book.tags or book.characters %}
+                <div>
+                    {% for tag in book.tags %}
+                        <div class="tag tag-general">
+                            <a href="{{ url_for('route_index', include_tags=tag) }}" rel="nofollow">
+                                {{ tag }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                    {% for character in book.characters %}
+                        <div class="tag tag-character">
+                            <a href="{{ url_for('route_index', include_characters=character) }}" rel="nofollow">
+                                {{ character }}
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if book.descriptions %}
+                <div style="display: flex; flex-direction: column;">
+                    {% for description in book.descriptions %}
+                        <details class="description-box">
+                            <summary>{{ description.name }}</summary>
+                            {{ description.details | safe }}
+                        </details>
+                    {% endfor %}
+                </div>
+            {% endif %}
             <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                 {% for entry in book.entries %}
                     <div class="entry-box">

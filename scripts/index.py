@@ -20,6 +20,15 @@ class IndexBook(BaseModel):
     thumbnail = ForeignKeyField(IndexThumbnail)
 
 
+class IndexTag(BaseModel):
+    name = CharField(primary_key=True)
+
+
+class IndexBookTag(BaseModel):
+    book = ForeignKeyField(IndexBook)
+    tag = ForeignKeyField(IndexTag)
+
+
 class IndexCharacter(BaseModel):
     name = CharField(primary_key=True)
 
@@ -29,13 +38,10 @@ class IndexBookCharacter(BaseModel):
     character = ForeignKeyField(IndexCharacter)
 
 
-class IndexTag(BaseModel):
-    name = CharField(primary_key=True)
-
-
-class IndexBookTag(BaseModel):
+class IndexBookDescription(BaseModel):
     book = ForeignKeyField(IndexBook)
-    tag = ForeignKeyField(IndexTag)
+    name = CharField()
+    details = CharField()
 
 
 class IndexEntry(BaseModel):

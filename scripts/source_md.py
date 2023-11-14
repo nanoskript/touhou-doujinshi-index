@@ -2,6 +2,7 @@ import dataclasses
 import time
 
 import PIL
+import mistletoe
 import requests
 from peewee import SqliteDatabase, Model, BlobField, CharField
 from playhouse.sqlite_ext import JSONField
@@ -43,8 +44,10 @@ class MDEntry:
 
 MD_LANGUAGE_MAP = {
     "en": "English",
+    "ja": "Japanese",
     "id": "Indonesian",
     "ru": "Russian",
+    "pt": "Portuguese",
     "pt-br": "Portuguese",
     "vi": "Vietnamese",
     "de": "German",
@@ -61,6 +64,13 @@ MD_LANGUAGE_MAP = {
 }
 
 
+def md_language(code: str) -> str:
+    if code not in MD_LANGUAGE_MAP:
+        print(f"[warning] missing language code: {code}")
+        return code
+    return MD_LANGUAGE_MAP[code]
+
+
 def md_manga_title(manga: MDManga) -> str:
     manga_titles = manga.data["attributes"]["title"]
     return list(manga_titles.values())[0]
@@ -73,6 +83,16 @@ def md_manga_tags(manga: MDManga) -> list[str]:
         if name not in ["Doujinshi", "Oneshot"]:
             tags.append(name)
     return tags
+
+
+def md_manga_descriptions(manga: MDManga) -> dict[str, str]:
+    descriptions = {}
+    for code, details in manga.data["attributes"]["description"].items():
+        if details.strip():
+            name = f"MangaDex description ({md_language(code)})"
+            details = details.replace("\n", "  \n")
+            descriptions[name] = mistletoe.markdown(details)
+    return descriptions
 
 
 def all_md_chapters() -> list[MDEntry]:
@@ -91,10 +111,7 @@ def all_md_chapters() -> list[MDEntry]:
 
             def chapter_language():
                 code = chapter["attributes"]["translatedLanguage"]
-                if code not in MD_LANGUAGE_MAP:
-                    print(f"[warning] missing language code: {code}")
-                    return code
-                return MD_LANGUAGE_MAP[code]
+                return md_language(code)
 
             def chapter_thumbnail():
                 data = MDChapter.get_or_none(MDChapter.slug == chapter["id"])

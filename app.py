@@ -10,7 +10,7 @@ from flask import Flask, render_template, send_file, request
 from peewee import fn
 
 from scripts.entry import entry_key_readable_source, ALL_SOURCE_TYPES
-from scripts.index import IndexEntry, IndexBook, IndexBookCharacter, IndexThumbnail, IndexBookTag
+from scripts.index import *
 
 app = Flask(__name__)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
@@ -22,6 +22,7 @@ class BookData:
     thumbnail_id: str
     tags: list[str]
     characters: list[str]
+    descriptions: list[IndexBookDescription]
     entries: list[IndexEntry]
 
 
@@ -53,9 +54,12 @@ def build_book(book: int, f: EntriesFilter) -> BookData:
                    .order_by(IndexBookCharacter.character)
                    .distinct())]
 
+    descriptions = list(IndexBookDescription.select()
+                        .where(IndexBookDescription.book == book)
+                        .order_by(IndexBookDescription.name))
+
     query = IndexEntry.select().where(IndexEntry.book == book)
     query = filter_entries(query, f)
-
     entries = list(query.order_by(
         IndexEntry.language,
         IndexEntry.date.desc(),
@@ -67,6 +71,7 @@ def build_book(book: int, f: EntriesFilter) -> BookData:
         thumbnail_id=book.thumbnail_id,
         tags=tags,
         characters=characters,
+        descriptions=descriptions,
         entries=entries,
     )
 

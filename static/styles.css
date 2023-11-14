@@ -38,13 +38,10 @@ body {
 
 .book-container-main {
     grid-area: main;
-}
-
-.book-container-main .entry-box {
-    background-color: #f0f0f0;
-    border-left: 0.3rem grey solid;
-    padding: 0.5rem 1.5rem;
-    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    margin-top: 1rem;
 }
 
 .book-container-main .tag {
@@ -62,6 +59,17 @@ body {
 
 .book-container-main .tag-character {
     border-left-color: seagreen;
+}
+
+.book-container-main .description-box p:last-child {
+    margin: 0;
+}
+
+.book-container-main .entry-box {
+    background-color: #f0f0f0;
+    border-left: 0.3rem grey solid;
+    padding: 0.5rem 1.5rem;
+    line-height: 1.4;
 }
 
 .pagination {

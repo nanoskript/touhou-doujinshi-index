@@ -77,6 +77,13 @@ def entry_list_tags(entry_list: EntryList) -> list[str]:
     return list(sorted(set(tags)))
 
 
+def entry_list_descriptions(entry_list: EntryList):
+    descriptions = {}
+    for entry in entry_list.entries:
+        descriptions.update(entry_descriptions(entry))
+    return descriptions
+
+
 def main():
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
@@ -95,6 +102,7 @@ def main():
         IndexBookCharacter,
         IndexTag,
         IndexBookTag,
+        IndexBookDescription,
         IndexThumbnail,
     ]
 
@@ -116,13 +124,16 @@ def main():
                 thumbnail=thumbnail,
             )
 
+            for name in entry_list_tags(entry_list):
+                (tag, _created) = IndexTag.get_or_create(name=name)
+                IndexBookTag.create(book=book, tag=tag)
+
             for name in entry_list_characters(character_index, entry_list):
                 (character, _created) = IndexCharacter.get_or_create(name=name)
                 IndexBookCharacter.create(book=book, character=character)
 
-            for name in entry_list_tags(entry_list):
-                (tag, _created) = IndexTag.get_or_create(name=name)
-                IndexBookTag.create(book=book, tag=tag)
+            for name, details in entry_list_descriptions(entry_list).items():
+                IndexBookDescription.create(book=book, name=name, details=details)
 
             IndexEntry.bulk_create([IndexEntry(
                 id=entry_key(entry),

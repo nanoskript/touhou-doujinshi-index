@@ -4,10 +4,10 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Union
 
-from .source_db import DBEntry, pool_translation_ratio
+from .source_db import DBEntry, pool_translation_ratio, pool_description
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
 from .source_eh import EHEntry
-from .source_md import MDEntry, md_manga_title, md_manga_tags
+from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions
 
 Entry = Union[
     DBEntry,
@@ -170,3 +170,13 @@ def entry_tags(entry: Entry) -> list[str]:
     if isinstance(entry, MDEntry):
         return md_manga_tags(entry.manga)
     return []
+
+
+def entry_descriptions(entry: Entry) -> dict[str, str]:
+    if isinstance(entry, DBEntry):
+        description = pool_description(entry)
+        if description:
+            return {"Danbooru description": description}
+    if isinstance(entry, MDEntry):
+        return md_manga_descriptions(entry.manga)
+    return {}
