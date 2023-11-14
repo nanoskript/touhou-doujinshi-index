@@ -132,7 +132,8 @@ body {
 .checklist {
     display: flex;
     flex-direction: row;
-    gap: 2rem;
+    flex-wrap: wrap;
+    column-gap: 2rem;
 }
 
 .checklist label {
