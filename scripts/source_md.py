@@ -1,4 +1,5 @@
 import dataclasses
+import re
 import time
 
 import PIL
@@ -90,7 +91,7 @@ def md_manga_descriptions(manga: MDManga) -> dict[str, str]:
     for code, details in manga.data["attributes"]["description"].items():
         if details.strip():
             name = f"MangaDex description ({md_language(code)})"
-            details = details.replace("\n", "  \n")
+            details = re.sub(r"(?<=\S)\n", "  \n", details)
             descriptions[name] = mistletoe.markdown(details)
     return descriptions
 
