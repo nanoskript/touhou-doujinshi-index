@@ -43,6 +43,13 @@
             </summary>
             <div class="advanced-options-controls">
                 <div>
+                    <label>Only include entries in this language:</label>
+                    {{ language_selector("language") }}
+                    <small class="form-control-help">
+                        For example, selecting <code>English</code> will only show links to English translations.
+                    </small>
+                </div>
+                <div>
                     <label>Include these tags:</label>
                     <input name="include_tags" value="{{ request.args.include_tags }}"
                            class="form-control"/>
@@ -57,13 +64,6 @@
                     <small class="form-control-help">
                         For example, <code>alice marisa</code> will only show results tagged with both Alice Margatroid
                         and Kirisame Marisa.
-                    </small>
-                </div>
-                <div>
-                    <label>Only include entries in this language:</label>
-                    {{ language_selector("language") }}
-                    <small class="form-control-help">
-                        For example, selecting <code>English</code> will only show links to English translations.
                     </small>
                 </div>
                 <div>
