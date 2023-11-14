@@ -205,6 +205,8 @@ def route_index():
 def route_book(key: str):
     def build_description(b: BookData) -> str:
         lines = [f"{pluralize(len(b.entries), 'entry', 'entries')}."]
+        if b.tags:
+            lines.append(f"Tags: {', '.join(b.tags)}.")
         if b.characters:
             lines.append(f"Characters: {', '.join(b.characters)}.")
         return " ".join(lines)
