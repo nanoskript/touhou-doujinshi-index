@@ -22,6 +22,7 @@ body {
     display: flex;
     flex-direction: row;
     justify-content: center;
+    margin: 0;
 }
 
 .book-container-thumbnail img {
@@ -30,12 +31,9 @@ body {
 
 .book-container-title {
     grid-area: title;
-}
-
-.book-container-title h3 {
-    margin: 0;
     font-size: x-large;
     line-height: 1.4;
+    margin: 0;
 }
 
 .book-container-main {
