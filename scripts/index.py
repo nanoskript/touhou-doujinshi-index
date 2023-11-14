@@ -1,9 +1,6 @@
-import dataclasses
-
 from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 
 from .date_time_utc_field import DateTimeUTCField
-from .entry import Entry
 
 db = SqliteDatabase("data/index.db")
 
@@ -49,8 +46,3 @@ class IndexEntry(BaseModel):
     date = DateTimeUTCField(index=True)
     language = CharField(index=True)
     page_count = IntegerField()
-
-
-@dataclasses.dataclass()
-class EntryList:
-    entries: list[Entry]

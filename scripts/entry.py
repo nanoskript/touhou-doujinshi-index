@@ -1,3 +1,4 @@
+import dataclasses
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -14,6 +15,11 @@ Entry = Union[
     DSEntry,
     MDEntry,
 ]
+
+
+@dataclasses.dataclass()
+class EntryList:
+    entries: list[Entry]
 
 
 def entry_key(entry: Entry) -> str:

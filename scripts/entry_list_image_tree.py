@@ -3,8 +3,7 @@ import dataclasses
 import pybktree
 
 from .build_image_hashes import entry_h8s
-from .entry import Entry
-from .index import EntryList
+from .entry import Entry, EntryList
 from .utility import deduplicate_by_identity
 
 

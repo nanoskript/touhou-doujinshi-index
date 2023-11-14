@@ -1,5 +1,4 @@
 import io
-from typing import Optional
 
 import PIL
 import imagehash
