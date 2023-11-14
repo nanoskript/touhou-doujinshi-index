@@ -45,6 +45,14 @@ def ds_entry_characters(entry: DSEntry) -> list[str]:
     return list(set(characters))
 
 
+def ds_entry_tags(entry: DSEntry) -> list[str]:
+    tags = []
+    for tag in entry.data["tags"]:
+        if tag["type"] in ["General", "Pairing"]:
+            tags.append(tag["name"])
+    return tags
+
+
 def main():
     db.connect()
     db.create_tables([DSEntry])

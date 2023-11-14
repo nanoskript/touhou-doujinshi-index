@@ -43,6 +43,14 @@
             </summary>
             <div class="advanced-options-controls">
                 <div>
+                    <label>Include these tags:</label>
+                    <input name="include_tags" value="{{ request.args.include_tags }}"
+                           class="form-control"/>
+                    <small class="form-control-help">
+                        For example, <code>yuri</code> will only show results tagged with Yuri or Girls' Love.
+                    </small>
+                </div>
+                <div>
                     <label>Include these characters:</label>
                     <input name="include_characters" value="{{ request.args.include_characters }}"
                            class="form-control"/>

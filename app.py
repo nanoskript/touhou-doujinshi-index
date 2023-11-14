@@ -10,7 +10,7 @@ from flask import Flask, render_template, send_file, request
 from peewee import fn
 
 from scripts.entry import entry_key_readable_source, ALL_SOURCE_TYPES
-from scripts.index import IndexEntry, IndexBook, IndexBookCharacter, IndexThumbnail
+from scripts.index import IndexEntry, IndexBook, IndexBookCharacter, IndexThumbnail, IndexBookTag
 
 app = Flask(__name__)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
@@ -20,6 +20,7 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
 class BookData:
     title: str
     thumbnail_id: str
+    tags: list[str]
     characters: list[str]
     entries: list[IndexEntry]
 
@@ -40,6 +41,12 @@ def filter_entries(query, f: EntriesFilter):
 
 def build_book(book: int, f: EntriesFilter) -> BookData:
     book = IndexBook.get_by_id(book)
+    tags = [str(row.tag) for row in
+            (IndexBookTag.select()
+             .where(IndexBookTag.book == book)
+             .order_by(IndexBookTag.tag)
+             .distinct())]
+
     characters = [str(row.character) for row in
                   (IndexBookCharacter.select()
                    .where(IndexBookCharacter.book == book)
@@ -58,6 +65,7 @@ def build_book(book: int, f: EntriesFilter) -> BookData:
     return BookData(
         title=book.title,
         thumbnail_id=book.thumbnail_id,
+        tags=tags,
         characters=characters,
         entries=entries,
     )
@@ -91,6 +99,7 @@ def pluralize(number: int, string: str, plural: str = None) -> str:
 
 def build_full_query(
     title: str | None,
+    must_include_tags: list[str],
     must_include_characters: list[str],
     exclude_on_sources: list[str],
     exclude_on_language: str | None,
@@ -104,6 +113,12 @@ def build_full_query(
             IndexBook.title.contains(title) |
             IndexEntry.title.contains(title)
         )
+
+    for tag in must_include_tags:
+        books_with_tag = (IndexBook.select()
+                          .join(IndexBookTag)
+                          .where(IndexBookTag.tag.contains(tag)))
+        query = query.where(IndexBook.id << books_with_tag)
 
     for character in must_include_characters:
         books_with_character = (IndexBook.select()
@@ -157,6 +172,7 @@ def route_index():
 
     query = build_full_query(
         title=request.args.get("title", None),
+        must_include_tags=request.args.get("include_tags", "").split(),
         must_include_characters=request.args.get("include_characters", "").split(),
         exclude_on_sources=request.args.getlist("exclude_on_source"),
         exclude_on_language=request.args.get("exclude_on_language", None),

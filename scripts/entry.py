@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import Union
 
 from .source_db import DBEntry, pool_translation_ratio
-from .source_ds import DSEntry, ds_entry_characters
+from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
 from .source_eh import EHEntry
-from .source_md import MDEntry, md_manga_title
+from .source_md import MDEntry, md_manga_title, md_manga_tags
 
 Entry = Union[
     DBEntry,
@@ -156,3 +156,11 @@ def entry_characters(entry: Entry) -> list[str]:
         return ds_entry_characters(entry)
     if isinstance(entry, MDEntry):
         return []
+
+
+def entry_tags(entry: Entry) -> list[str]:
+    if isinstance(entry, DSEntry):
+        return ds_entry_tags(entry)
+    if isinstance(entry, MDEntry):
+        return md_manga_tags(entry.manga)
+    return []

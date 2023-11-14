@@ -12,6 +12,13 @@
         </div>
         <div class="book-container-main">
             <div style="margin: 1rem 0;">
+                {% for tag in book.tags %}
+                    <div class="tag tag-general">
+                        <a href="{{ url_for('route_index', include_tags=tag) }}" rel="nofollow">
+                            {{ tag }}
+                        </a>
+                    </div>
+                {% endfor %}
                 {% for character in book.characters %}
                     <div class="tag tag-character">
                         <a href="{{ url_for('route_index', include_characters=character) }}" rel="nofollow">

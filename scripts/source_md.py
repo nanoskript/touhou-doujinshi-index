@@ -66,6 +66,15 @@ def md_manga_title(manga: MDManga) -> str:
     return list(manga_titles.values())[0]
 
 
+def md_manga_tags(manga: MDManga) -> list[str]:
+    tags = []
+    for tag in manga.data["attributes"]["tags"]:
+        name = tag["attributes"]["name"]["en"]
+        if name not in ["Doujinshi", "Oneshot"]:
+            tags.append(name)
+    return tags
+
+
 def all_md_chapters() -> list[MDEntry]:
     chapters = []
     for manga in MDManga.select():

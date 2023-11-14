@@ -32,6 +32,15 @@ class IndexBookCharacter(BaseModel):
     character = ForeignKeyField(IndexCharacter)
 
 
+class IndexTag(BaseModel):
+    name = CharField(primary_key=True)
+
+
+class IndexBookTag(BaseModel):
+    book = ForeignKeyField(IndexBook)
+    tag = ForeignKeyField(IndexTag)
+
+
 class IndexEntry(BaseModel):
     id = CharField(primary_key=True)
     book = ForeignKeyField(IndexBook)

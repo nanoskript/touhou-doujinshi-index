@@ -58,6 +58,10 @@ body {
     margin: 0.2rem 0;
 }
 
+.book-container-main .tag-general {
+    border-left-color: blueviolet;
+}
+
 .book-container-main .tag-character {
     border-left-color: seagreen;
 }

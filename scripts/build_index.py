@@ -5,7 +5,7 @@ from .character_index import CharacterIndex
 from .source_md import all_md_chapters
 from .entry import *
 from .entry_list_image_tree import EntryListImageTree
-from .index import EntryList, db, IndexEntry, IndexBook, IndexCharacter, IndexBookCharacter, IndexThumbnail
+from .index import *
 from .source_db import filter_db_entries
 from .source_eh import gallery_circles, gallery_artists, filter_eh_entries
 
@@ -55,6 +55,28 @@ def entry_list_characters(index: CharacterIndex, entry_list: EntryList) -> list[
     return list(sorted(set(characters)))
 
 
+def entry_list_tags(entry_list: EntryList) -> list[str]:
+    synonyms = {
+        "Girls' Love": "Yuri",
+        "Slice of Life": "Slice of life",
+        "School Life": "School life",
+        "Time Travel": "Time travel",
+        "Sci-Fi": "Sci-fi",
+        "4-Koma": "4-koma",
+        "Full Color": "Full color",
+        "Gender bender": "Genderswap",
+        "Alien": "Aliens",
+        "Ghost": "Ghosts",
+        "Vampire": "Vampires",
+    }
+
+    tags = []
+    for entry in entry_list.entries:
+        for tag in entry_tags(entry):
+            tags.append(synonyms.get(tag, tag))
+    return list(sorted(set(tags)))
+
+
 def main():
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
@@ -71,6 +93,8 @@ def main():
         IndexBook,
         IndexCharacter,
         IndexBookCharacter,
+        IndexTag,
+        IndexBookTag,
         IndexThumbnail,
     ]
 
@@ -95,6 +119,10 @@ def main():
             for name in entry_list_characters(character_index, entry_list):
                 (character, _created) = IndexCharacter.get_or_create(name=name)
                 IndexBookCharacter.create(book=book, character=character)
+
+            for name in entry_list_tags(entry_list):
+                (tag, _created) = IndexTag.get_or_create(name=name)
+                IndexBookTag.create(book=book, tag=tag)
 
             IndexEntry.bulk_create([IndexEntry(
                 id=entry_key(entry),
