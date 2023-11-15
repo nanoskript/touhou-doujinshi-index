@@ -1,9 +1,5 @@
-import re
-from typing import Optional
-
-import mistletoe
 import requests
-from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField
+from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 
 from .utility import HEADERS
@@ -33,6 +29,11 @@ class DBCharacter(BaseModel):
     data = JSONField()
 
 
+class DBPoolDescription(BaseModel):
+    pool = ForeignKeyField(DBEntry, unique=True)
+    html = CharField()
+
+
 def filter_db_entries():
     entries = []
     for entry in DBEntry.select().order_by(DBEntry.pool_id):
@@ -58,26 +59,6 @@ def pool_translation_ratio(entry: DBEntry) -> float:
         if "translated" in post["tag_string_meta"]:
             translation_count += 1
     return translation_count / len(entry.posts)
-
-
-# TODO: Improve DText parsing.
-def pool_description(entry: DBEntry) -> Optional[str]:
-    text = entry.data["description"].strip()
-    if not text:
-        return None
-
-    text = re.sub(r"\r\n", r"  \n", text)
-    text = re.sub(r"\[\[([\w\s\-()]+)\|([\w\s\-()]+)]]", r"\2", text)
-    text = re.sub(r"\[\[([\w\s\-()]+)\|?]]", r"\1", text)
-    text = re.sub(r"\{\{([\w\s\-()]+)}}", r"\1", text)
-    text = re.sub(r'"([^"]+)":\[([^\s)]+)]', r"[\1](\2)", text)
-    text = re.sub(r'"([^"]+)":([^\s)]+)', r"[\1](\2)", text)
-    text = re.sub(r'(?<=[\s(])((http|https)://[^\s)]+)', r"<\1>", text)
-    text = re.sub(r"\[i]([^]]+)\[/i]", r"<i>\1</i>", text)
-    text = re.sub(r"\[b]([^]]+)\[/b]", r"<b>\1</b>", text)
-    for level in range(1, 7):
-        text = re.sub(rf'h{level}.', rf'{"#" * level} ', text)
-    return mistletoe.markdown(text)
 
 
 # TODO: Include 東方 as query.
@@ -192,15 +173,42 @@ def scrape_artists():
             )
 
 
+def render_pool_descriptions():
+    batch_size = 1000
+    entries = list(DBEntry.select())
+    for start in range(0, len(entries), batch_size):
+        print(f"[descriptions] {start}")
+        batch = entries[start:start + batch_size]
+        strings = [entry.data["description"] for entry in batch]
+
+        results = requests.post(
+            f"https://dtext.nanoskript.dev/dtext-parse",
+            headers=HEADERS,
+            json=strings,
+        ).json()
+
+        for entry, html in zip(batch, results):
+            (DBPoolDescription.delete()
+             .where(DBPoolDescription.pool == entry)
+             .execute())
+
+            DBPoolDescription.create(
+                pool=entry,
+                html=html,
+            )
+
+
 def main():
     db.connect()
     db.create_tables([
         DBEntry,
         DBArtist,
+        DBPoolDescription,
     ])
 
     scrape_pools()
     scrape_artists()
+    render_pool_descriptions()
 
 
 if __name__ == '__main__':

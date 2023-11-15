@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Union
 
-from .source_db import DBEntry, pool_translation_ratio, pool_description
+from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
 from .source_eh import EHEntry
 from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions
@@ -174,9 +174,9 @@ def entry_tags(entry: Entry) -> list[str]:
 
 def entry_descriptions(entry: Entry) -> dict[str, str]:
     if isinstance(entry, DBEntry):
-        description = pool_description(entry)
-        if description:
-            return {"Danbooru description": description}
+        row = DBPoolDescription.get_or_none(DBPoolDescription.pool == entry)
+        if row and row.html:
+            return {"Danbooru description": row.html}
     if isinstance(entry, MDEntry):
         return md_manga_descriptions(entry.manga)
     return {}
