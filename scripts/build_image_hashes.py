@@ -33,7 +33,6 @@ def entry_h8s(entry: Entry) -> list[int]:
     return []
 
 
-# TODO: Handle rotation invariance.
 def image_hash(image: Image, size: int) -> str:
     return str(imagehash.phash(image, hash_size=size))
 
@@ -50,6 +49,10 @@ def entry_candidate_images(entry: Entry) -> list[Image]:
         if width > height:
             # Image is landscape so append left half.
             images.append(image.crop((0, 0, width // 2, height)))
+
+            # Try rotating clockwise and anti-clockwise.
+            images.append(image.rotate(angle=270, expand=True))
+            images.append(image.rotate(angle=90, expand=True))
     return images
 
 
