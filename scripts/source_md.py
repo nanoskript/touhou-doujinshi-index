@@ -230,10 +230,6 @@ def request_with_retry(url):
 
 def scrape_chapters():
     for manga in MDManga.select():
-        # Skip fetching chapter cover images when only one chapter exists.
-        if len(manga.chapters) <= 1:
-            continue
-
         for chapter in manga.chapters:
             slug = chapter["id"]
             if MDChapter.get_or_none(MDChapter.slug == slug):
