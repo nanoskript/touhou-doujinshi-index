@@ -1,6 +1,6 @@
 # touhou-doujinshi-index
 
-[Website](https://scarlet.nanoskript.dev/)
+[Website](https://scarlet.nsk.sh/)
 
 A searchable database of Touhou doujinshi translations.
 
