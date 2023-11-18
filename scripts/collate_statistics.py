@@ -49,9 +49,12 @@ def graph_languages_over_time():
 
 
 def graph_websites_over_time():
+    # Ignore metadata-only entries.
     query = [
         {"site": entry_key_readable_source(entry.id), "date": entry.date}
-        for entry in IndexEntry.select(IndexEntry.id, IndexEntry.date)
+        for entry in (IndexEntry
+                      .select(IndexEntry.id, IndexEntry.date)
+                      .where(~IndexEntry.language.is_null()))
     ]
 
     df = (pd.DataFrame(query)
