@@ -1,0 +1,10 @@
+from distutils.extension import Extension
+
+
+def make_ext(module, file):
+    return Extension(
+        name=module,
+        sources=[file],
+        language="c++",
+        extra_compile_args=["-std=c++20", "-O2"],
+    )
