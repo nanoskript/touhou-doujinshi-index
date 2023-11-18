@@ -15,7 +15,7 @@ class CharacterIndex:
                     .strip())
 
         characters = Counter()
-        for entry in DBEntry.select():
+        for entry in DBEntry.select(DBEntry.posts):
             names = []
             for post in entry.posts:
                 names += post["tag_string_character"].split()

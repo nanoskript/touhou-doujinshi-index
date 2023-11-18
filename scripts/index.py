@@ -16,6 +16,7 @@ class IndexThumbnail(BaseModel):
 
 
 class IndexBook(BaseModel):
+    id = IntegerField(primary_key=True)
     title = CharField()
     thumbnail = ForeignKeyField(IndexThumbnail)
 

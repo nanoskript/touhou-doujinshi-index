@@ -84,6 +84,10 @@ def entry_list_descriptions(entry_list: EntryList):
     return descriptions
 
 
+def entry_list_canonical(entry_list: EntryList) -> Entry:
+    return entry_list.entries[0]
+
+
 def main():
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
@@ -112,30 +116,47 @@ def main():
         db.drop_tables(tables)
         db.create_tables(tables)
 
-        for entry_list in tqdm(lists):
-            canonical = entry_list.entries[0]
-            thumbnail = IndexThumbnail.create(
-                id=entry_key(canonical),
-                data=entry_thumbnails(canonical)[0],
-            )
+        thumbnails = [IndexThumbnail(
+            id=entry_key(entry_list_canonical(item)),
+            data=entry_thumbnails(entry_list_canonical(item))[0],
+        ) for item in tqdm(lists)]
+        IndexThumbnail.bulk_create(thumbnails)
 
-            book = IndexBook.create(
-                title=entry_book_title(canonical),
-                thumbnail=thumbnail,
-            )
+        books = [IndexBook(
+            id=index,
+            title=entry_book_title(entry_list_canonical(item)),
+            thumbnail=thumbnail,
+        ) for (index, item), thumbnail in zip(enumerate(tqdm(lists)), thumbnails)]
+        IndexBook.bulk_create(books)
 
-            for name in entry_list_tags(entry_list):
-                (tag, _created) = IndexTag.get_or_create(name=name)
-                IndexBookTag.create(book=book, tag=tag)
+        IndexBookDescription.bulk_create([
+            IndexBookDescription(book=book, name=name, details=details)
+            for item, book in zip(tqdm(lists), books)
+            for name, details in entry_list_descriptions(item).items()
+        ])
 
-            for name in entry_list_characters(character_index, entry_list):
-                (character, _created) = IndexCharacter.get_or_create(name=name)
-                IndexBookCharacter.create(book=book, character=character)
+        all_tags, book_tags = set(), []
+        for item, book in zip(tqdm(lists), books):
+            tags = entry_list_tags(item)
+            all_tags.update(set(tags))
+            book_tags.extend((IndexBookTag(book=book, tag=tag) for tag in tags))
+        IndexTag.bulk_create([IndexTag(name=name) for name in all_tags])
+        IndexBookTag.bulk_create(book_tags)
 
-            for name, details in entry_list_descriptions(entry_list).items():
-                IndexBookDescription.create(book=book, name=name, details=details)
+        all_characters, book_characters = set(), []
+        for item, book in zip(tqdm(lists), books):
+            characters = entry_list_characters(character_index, item)
+            all_characters.update(set(characters))
+            book_characters.extend((
+                IndexBookCharacter(book=book, character=character)
+                for character in characters
+            ))
+        all_character_models = [IndexCharacter(name=name) for name in all_characters]
+        IndexCharacter.bulk_create(all_character_models)
+        IndexBookCharacter.bulk_create(book_characters)
 
-            IndexEntry.bulk_create([IndexEntry(
+        IndexEntry.bulk_create([
+            IndexEntry(
                 id=entry_key(entry),
                 book=book,
                 title=entry_title(entry),
@@ -143,7 +164,10 @@ def main():
                 date=entry_date(entry),
                 language=entry_language(entry),
                 page_count=entry_page_count(entry),
-            ) for entry in entry_list.entries])
+            )
+            for item, book in zip(tqdm(lists), books)
+            for entry in item.entries
+        ])
 
 
 if __name__ == '__main__':
