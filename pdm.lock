@@ -6,7 +6,7 @@ groups = ["default"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:0b2efefcb94d69473be8efa9c490398c0fa9bfaf08b025575647d97c036d5141"
+content_hash = "sha256:5202e086c2ae919c57c5cbd98bbc2444a161b4b3ee3ac2fcf19e8584ba046ddf"
 
 [[package]]
 name = "beautifulsoup4"
@@ -207,6 +207,19 @@ dependencies = [
 files = [
     {file = "flask-3.0.0-py3-none-any.whl", hash = "sha256:21128f47e4e3b9d597a3e8521a329bf56909b690fcc3fa3e477725aa81367638"},
     {file = "flask-3.0.0.tar.gz", hash = "sha256:cfadcdb638b609361d29ec22360d6070a77d7463dcb3ab08d2c2f2f168845f58"},
+]
+
+[[package]]
+name = "ftfy"
+version = "6.1.1"
+requires_python = ">=3.7,<4"
+summary = "Fixes mojibake and other problems with Unicode, after the fact"
+dependencies = [
+    "wcwidth>=0.2.5",
+]
+files = [
+    {file = "ftfy-6.1.1-py3-none-any.whl", hash = "sha256:0ffd33fce16b54cccaec78d6ec73d95ad370e5df5a25255c8966a6147bd667ca"},
+    {file = "ftfy-6.1.1.tar.gz", hash = "sha256:bfc2019f84fcd851419152320a6375604a0f1459c281b5b199b2cd0d2e727f8f"},
 ]
 
 [[package]]
@@ -662,6 +675,16 @@ files = [
 ]
 
 [[package]]
+name = "split-file-reader"
+version = "0.1.4"
+requires_python = ">=3.5"
+summary = "A package to read parted files on disk."
+files = [
+    {file = "split_file_reader-0.1.4-py3-none-any.whl", hash = "sha256:b113844ff733707de95c874d48f390f8fa0ec82a4c33f61edd61f4bd37ffd625"},
+    {file = "split_file_reader-0.1.4.tar.gz", hash = "sha256:45bf503999640dd8c38a200878a5f4e9d6486ac57b26c953c13b5eea4da8852a"},
+]
+
+[[package]]
 name = "tenacity"
 version = "8.2.3"
 requires_python = ">=3.7"
@@ -710,6 +733,15 @@ summary = "HTTP library with thread-safe connection pooling, file post, and more
 files = [
     {file = "urllib3-2.0.5-py3-none-any.whl", hash = "sha256:ef16afa8ba34a1f989db38e1dbbe0c302e4289a47856990d0682e374563ce35e"},
     {file = "urllib3-2.0.5.tar.gz", hash = "sha256:13abf37382ea2ce6fb744d4dad67838eec857c9f4f57009891805e0b5e123594"},
+]
+
+[[package]]
+name = "wcwidth"
+version = "0.2.10"
+summary = "Measures the displayed width of unicode strings in a terminal"
+files = [
+    {file = "wcwidth-0.2.10-py2.py3-none-any.whl", hash = "sha256:aec5179002dd0f0d40c456026e74a729661c9d468e1ed64405e3a6c2176ca36f"},
+    {file = "wcwidth-0.2.10.tar.gz", hash = "sha256:390c7454101092a6a5e43baad8f83de615463af459201709556b6e4b1c861f97"},
 ]
 
 [[package]]

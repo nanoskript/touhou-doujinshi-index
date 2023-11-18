@@ -105,6 +105,20 @@
                         translations. Use this option to find untranslated works.
                     </small>
                 </div>
+                <div>
+                    <label>Show results that only contain metadata entries:</label>
+                    <div class="checklist">
+                        <label>
+                            <input type="checkbox" name="include_metadata_only"
+                                    {{ "checked" if request.args["include_metadata_only"] }}/>
+                            Show metadata-only results
+                        </label>
+                    </div>
+                    <small class="form-control-help">
+                        Enabling this option will include results that do not have any translations.
+                        This includes every result with an entry on doujinshi.org.
+                    </small>
+                </div>
             </div>
         </details>
     </form>

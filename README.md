@@ -8,9 +8,10 @@ A searchable database of Touhou doujinshi translations.
 
 - `scripts` - Python scripts for scraping entries and building the database.
     - `source_*.py` - Scripts for scraping entries from sites.
+    - `data_*.py` - Scripts for sourcing metadata through various methods.
     - `build_image_hashes.py` - Transforms images into perceptual image hashes.
     - `build_index.py` - Processes entries to build the final database.
-    - `entry.py` - Defines a common interface for working with entries across all sites.
+    - `entry.py` - Defines a common interface for working with data across all sites.
 - `app.py` - Entry point for the public Flask web server.
 - `templates` - Templates for constructing HTML pages.
 

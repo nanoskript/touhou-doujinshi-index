@@ -2,8 +2,9 @@ import dataclasses
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
+from .data_doujinshi_org import OrgEntry, org_entry_release_date
 from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
 from .source_eh import EHEntry
@@ -14,6 +15,7 @@ Entry = Union[
     EHEntry,
     DSEntry,
     MDEntry,
+    OrgEntry,
 ]
 
 
@@ -31,6 +33,8 @@ def entry_key(entry: Entry) -> str:
         return f"ds-{entry.slug}"
     if isinstance(entry, MDEntry):
         return f"md-{entry.slug}"
+    if isinstance(entry, OrgEntry):
+        return f"org-{entry.id}"
 
 
 ALL_SOURCE_TYPES = {
@@ -38,6 +42,7 @@ ALL_SOURCE_TYPES = {
     "db": "Danbooru",
     "ds": "Dynasty Scans",
     "md": "MangaDex",
+    "org": "doujinshi.org"
 }
 
 
@@ -56,6 +61,8 @@ def entry_title(entry: Entry) -> str:
         return entry.data["title"]
     if isinstance(entry, MDEntry):
         return entry.title
+    if isinstance(entry, OrgEntry):
+        return entry.title
 
 
 def entry_book_title(entry: Entry) -> str:
@@ -67,15 +74,15 @@ def entry_book_title(entry: Entry) -> str:
     if isinstance(entry, EHEntry):
         brackets = r"(\s|\([^()]+\)|(\[[^\[\]]+])|(\{[^{}]+}))+$"
         return re.sub(brackets, "", entry_title(entry))
-    if isinstance(entry, DSEntry):
-        return entry_title(entry)
     if isinstance(entry, MDEntry):
         s = md_manga_title(entry.manga)
         s = s.removeprefix("Touhou -")
         s = s.removesuffix("(Doujinshi)")
         return s.strip()
+    return entry_title(entry)
 
 
+# FIXME: Currently, we assume there is at least one thumbnail.
 def entry_thumbnails(entry: Entry) -> list[bytes]:
     if isinstance(entry, DBEntry):
         return [entry.thumbnail]
@@ -85,9 +92,11 @@ def entry_thumbnails(entry: Entry) -> list[bytes]:
         return [entry.thumbnail]
     if isinstance(entry, MDEntry):
         return [entry.thumbnail, entry.manga.thumbnail]
+    if isinstance(entry, OrgEntry):
+        return [entry.thumbnail] if entry.thumbnail else None
 
 
-def entry_date(entry: Entry) -> datetime:
+def entry_date(entry: Entry) -> Optional[datetime]:
     if isinstance(entry, DBEntry):
         return datetime.fromisoformat(entry.data["created_at"])
     if isinstance(entry, EHEntry):
@@ -96,9 +105,11 @@ def entry_date(entry: Entry) -> datetime:
         return datetime.fromisoformat(entry.data["released_on"])
     if isinstance(entry, MDEntry):
         return datetime.fromisoformat(entry.date)
+    if isinstance(entry, OrgEntry):
+        return org_entry_release_date(entry)
 
 
-def entry_url(entry: Entry) -> str:
+def entry_url(entry: Entry) -> Optional[str]:
     if isinstance(entry, DBEntry):
         return f"https://danbooru.donmai.us/pools/{entry.pool_id}"
     if isinstance(entry, EHEntry):
@@ -109,7 +120,8 @@ def entry_url(entry: Entry) -> str:
         return f"https://mangadex.org/chapter/{entry.slug}"
 
 
-def entry_language(entry: Entry) -> str:
+# If absent, the entry is considered to be metadata-only.
+def entry_language(entry: Entry) -> Optional[str]:
     if isinstance(entry, DBEntry):
         if pool_translation_ratio(entry) >= 0.5:
             return "English"
@@ -128,7 +140,7 @@ def entry_language(entry: Entry) -> str:
         return entry.language
 
 
-def entry_page_count(entry: Entry) -> int:
+def entry_page_count(entry: Entry) -> Optional[int]:
     if isinstance(entry, DBEntry):
         return len(entry.posts)
     if isinstance(entry, EHEntry):
@@ -136,6 +148,8 @@ def entry_page_count(entry: Entry) -> int:
     if isinstance(entry, DSEntry):
         return len(entry.data["pages"])
     if isinstance(entry, MDEntry):
+        return entry.pages
+    if isinstance(entry, OrgEntry):
         return entry.pages
 
 
@@ -162,6 +176,8 @@ def entry_characters(entry: Entry) -> list[str]:
         return ds_entry_characters(entry)
     if isinstance(entry, MDEntry):
         return []
+    if isinstance(entry, OrgEntry):
+        return entry.characters
 
 
 def entry_tags(entry: Entry) -> list[str]:
@@ -179,4 +195,7 @@ def entry_descriptions(entry: Entry) -> dict[str, str]:
             return {"Danbooru description": row.html}
     if isinstance(entry, MDEntry):
         return md_manga_descriptions(entry.manga)
+    if isinstance(entry, OrgEntry):
+        if entry.comments:
+            return {"doujinshi.org comments": entry.comments}
     return {}

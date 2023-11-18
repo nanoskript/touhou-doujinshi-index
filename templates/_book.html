@@ -43,18 +43,31 @@
                 {% for entry in book.entries %}
                     <div class="entry-box">
                         <div>
-                            <a href="{{ entry.url }}" rel="nofollow">
+                            {% if entry.url %}
+                                <a href="{{ entry.url }}" rel="nofollow">
+                                    {{ entry.title | safe }}
+                                </a>
+                            {% else %}
                                 {{ entry.title | safe }}
-                            </a>
+                            {% endif %}
                         </div>
                         <div>
-                            <b>{{ entry.language }}</b> •
-                            <b>{{ entry | entry_readable_source }}</b> •
-                            <b>{{ pluralize(entry.page_count, "page") }}</b> •
-                            <time datetime="{{ entry.date }}"
-                                  title="{{ entry.date.strftime('%-d %B %Y') }}">
-                                <b>{{ entry.date | age }}</b>
-                            </time>
+                            {% if entry.language %}
+                                <b>{{ entry.language }}</b>
+                            {% else %}
+                                <b>Metadata</b>
+                            {% endif %} •
+                            <b>{{ entry | entry_readable_source }}</b>
+                            {% if entry.page_count %}
+                                • <b>{{ pluralize(entry.page_count, "page") }}</b>
+                            {% endif %}
+                            {% if entry.date %}
+                                •
+                                <time datetime="{{ entry.date }}"
+                                      title="{{ entry.date.strftime('%-d %B %Y') }}">
+                                    <b>{{ entry.date | age }}</b>
+                                </time>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}

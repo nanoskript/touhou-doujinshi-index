@@ -108,6 +108,7 @@ def build_full_query(
     must_include_characters: list[str],
     exclude_on_sources: list[str],
     exclude_on_language: str | None,
+    include_metadata_only: bool,
     f: EntriesFilter,
 ):
     query = IndexBook.select(IndexBook.id).join(IndexEntry)
@@ -146,6 +147,12 @@ def build_full_query(
                                .where(IndexEntry.language == exclude_on_language))
         query = query.where(~(IndexBook.id << books_with_language))
 
+    if not include_metadata_only:
+        not_metadata_only = (IndexBook.select()
+                             .join(IndexEntry)
+                             .where(~IndexEntry.language.is_null()))
+        query = query.where(IndexBook.id << not_metadata_only)
+
     # Sort by earliest entry present in book.
     return (query
             .group_by(IndexEntry.book)
@@ -181,6 +188,7 @@ def route_index():
         must_include_characters=request.args.get("include_characters", "").split(),
         exclude_on_sources=request.args.getlist("exclude_on_source"),
         exclude_on_language=request.args.get("exclude_on_language", None),
+        include_metadata_only=("include_metadata_only" in request.args),
         f=f,
     )
 
