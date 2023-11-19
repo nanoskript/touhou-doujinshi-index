@@ -98,6 +98,8 @@ def main():
         tree.add_or_create(entry, similarity=0.9)
     for entry in tqdm(OrgEntry.select()):
         tree.add_or_create(entry, similarity=0.9)
+    for entry in tqdm(CTHEntry.select()):
+        tree.add_or_create(entry, similarity=0.9)
     lists = tree.all_entry_lists()
 
     # Construct database.

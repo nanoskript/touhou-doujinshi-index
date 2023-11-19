@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Union, Optional
 
+from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
 from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
@@ -16,6 +17,7 @@ Entry = Union[
     DSEntry,
     MDEntry,
     OrgEntry,
+    CTHEntry,
 ]
 
 
@@ -35,6 +37,8 @@ def entry_key(entry: Entry) -> str:
         return f"md-{entry.slug}"
     if isinstance(entry, OrgEntry):
         return f"org-{entry.id}"
+    if isinstance(entry, CTHEntry):
+        return f"cth-{entry.id}"
 
 
 ALL_SOURCE_TYPES = {
@@ -42,7 +46,8 @@ ALL_SOURCE_TYPES = {
     "db": "Danbooru",
     "ds": "Dynasty Scans",
     "md": "MangaDex",
-    "org": "doujinshi.org"
+    "org": "doujinshi.org",
+    "cth": "comic.thproject.net",
 }
 
 
@@ -62,6 +67,8 @@ def entry_title(entry: Entry) -> str:
     if isinstance(entry, MDEntry):
         return entry.title
     if isinstance(entry, OrgEntry):
+        return entry.title
+    if isinstance(entry, CTHEntry):
         return entry.title
 
 
@@ -94,6 +101,8 @@ def entry_thumbnails(entry: Entry) -> list[bytes]:
         return [entry.thumbnail, entry.manga.thumbnail]
     if isinstance(entry, OrgEntry):
         return [entry.thumbnail] if entry.thumbnail else None
+    if isinstance(entry, CTHEntry):
+        return [entry.thumbnail]
 
 
 def entry_date(entry: Entry) -> Optional[datetime]:
@@ -107,6 +116,8 @@ def entry_date(entry: Entry) -> Optional[datetime]:
         return datetime.fromisoformat(entry.date)
     if isinstance(entry, OrgEntry):
         return org_entry_release_date(entry)
+    if isinstance(entry, CTHEntry):
+        return entry.release_date
 
 
 def entry_url(entry: Entry) -> Optional[str]:
@@ -118,6 +129,8 @@ def entry_url(entry: Entry) -> Optional[str]:
         return f"https://dynasty-scans.com/chapters/{entry.slug}"
     if isinstance(entry, MDEntry):
         return f"https://mangadex.org/chapter/{entry.slug}"
+    if isinstance(entry, CTHEntry):
+        return f"http://comic.thproject.net/showinfo.php?id={entry.id}"
 
 
 # If absent, the entry is considered to be metadata-only.
@@ -138,6 +151,8 @@ def entry_language(entry: Entry) -> Optional[str]:
         return "English"
     if isinstance(entry, MDEntry):
         return entry.language
+    if isinstance(entry, CTHEntry):
+        return "Chinese"
 
 
 def entry_page_count(entry: Entry) -> Optional[int]:
@@ -150,6 +165,8 @@ def entry_page_count(entry: Entry) -> Optional[int]:
     if isinstance(entry, MDEntry):
         return entry.pages
     if isinstance(entry, OrgEntry):
+        return entry.pages
+    if isinstance(entry, CTHEntry):
         return entry.pages
 
 
@@ -174,10 +191,9 @@ def entry_characters(entry: Entry) -> list[str]:
         return list(sorted(characters))
     if isinstance(entry, DSEntry):
         return ds_entry_characters(entry)
-    if isinstance(entry, MDEntry):
-        return []
     if isinstance(entry, OrgEntry):
         return entry.characters
+    return []
 
 
 def entry_tags(entry: Entry) -> list[str]:

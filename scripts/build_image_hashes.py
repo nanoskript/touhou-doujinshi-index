@@ -6,6 +6,7 @@ from peewee import SqliteDatabase, Model, CharField
 from PIL import Image
 from tqdm.contrib.concurrent import thread_map
 
+from scripts.data_comic_thproject_net import CTHEntry
 from scripts.data_doujinshi_org import OrgEntry
 from scripts.source_ds import DSEntry
 from .entry import entry_key, Entry, entry_thumbnails
@@ -76,6 +77,7 @@ def main():
         DSEntry.select(),
         all_md_chapters(),
         OrgEntry.select(),
+        CTHEntry.select(),
     ]
 
     for source in sources:

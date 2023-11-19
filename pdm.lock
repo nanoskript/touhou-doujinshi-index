@@ -6,7 +6,7 @@ groups = ["default"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:5202e086c2ae919c57c5cbd98bbc2444a161b4b3ee3ac2fcf19e8584ba046ddf"
+content_hash = "sha256:1778f4e5e552293887a729ee704046a6ae7e8f123e751c086cf19bc7cd655701"
 
 [[package]]
 name = "beautifulsoup4"
@@ -608,6 +608,16 @@ files = [
     {file = "PyWavelets-1.4.1-cp311-cp311-win32.whl", hash = "sha256:7231461d7a8eb3bdc7aa2d97d9f67ea5a9f8902522818e7e2ead9c2b3408eeb1"},
     {file = "PyWavelets-1.4.1-cp311-cp311-win_amd64.whl", hash = "sha256:daf0aa79842b571308d7c31a9c43bc99a30b6328e6aea3f50388cd8f69ba7dbc"},
     {file = "PyWavelets-1.4.1.tar.gz", hash = "sha256:6437af3ddf083118c26d8f97ab43b0724b956c9f958e9ea788659f6a2834ba93"},
+]
+
+[[package]]
+name = "rarfile"
+version = "4.1"
+requires_python = ">=3.6"
+summary = "RAR archive reader for Python"
+files = [
+    {file = "rarfile-4.1-py3-none-any.whl", hash = "sha256:17d7554c93c776ceae677e9d927051267d4c5eba38bf64b9cc89a415d9a5f901"},
+    {file = "rarfile-4.1.tar.gz", hash = "sha256:db60b3b5bc1c4bdeb941427d50b606d51df677353385255583847639473eda48"},
 ]
 
 [[package]]
