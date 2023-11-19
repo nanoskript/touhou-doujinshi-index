@@ -16,7 +16,7 @@
     {% endmacro %}
 
     <form action="/" method="get">
-        {% for key, value in request.args.items() %}
+        {% for key, value in request.args.items(multi=True) %}
             {% if key != "page" %}
                 <input type="hidden" name="{{ key }}" value="{{ value }}"/>
             {% endif %}
