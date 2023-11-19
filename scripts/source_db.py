@@ -47,7 +47,7 @@ def filter_db_entries():
 
         # Ignore explicit pools.
         criteria_e = explicit_count < 0.1 * len(entry.posts)
-        criteria_q = questionable_count < 0.5 * len(entry.posts)
+        criteria_q = questionable_count < 0.3 * len(entry.posts)
         if criteria_e and criteria_q:
             entries.append(entry)
     return entries
