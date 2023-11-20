@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="description" content="Search for translations of Touhou doujinshi and manga easily."/>
+    {% set description = " ".join([
+        "Read and search for all translations of Touhou doujinshi and manga.",
+        "Filter by Touhou character, title, and tags.",
+    ]) %}
+    <meta name="description" content="{{ description }}"/>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"/>
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}"/>
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
