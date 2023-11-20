@@ -2,7 +2,8 @@
     <section class="book-container">
         <figure class="book-container-thumbnail">
             <div class="book-container-thumbnail-box">
-                <img src="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"/>
+                <img src="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"
+                     alt="{{ book.title | safe }}"/>
             </div>
         </figure>
         <h3 class="book-container-title">
