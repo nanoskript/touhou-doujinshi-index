@@ -249,6 +249,11 @@ def route_about():
     )
 
 
+@app.route("/recipes")
+def route_recipes():
+    return render_template("recipes.html")
+
+
 @app.errorhandler(peewee.OperationalError)
 def handle_database_error(_e):
     return render_template(

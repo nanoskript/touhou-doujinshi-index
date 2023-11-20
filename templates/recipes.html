@@ -1,0 +1,123 @@
+{% extends "_base.html" %}
+
+{% block title %}
+    Recipes
+{% endblock %}
+
+{% block body %}
+    <section>
+        <h2>Recipes</h2>
+        <dl>
+            <dt>
+                <a href="{{ url_for('route_index', language='English') }}">
+                    Show only English translations
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>English</code> language option will only show links to translations in
+                        English.
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_index', language='English', include_characters='alice marisa') }}">
+                    Show only English translations that have Alice and Marisa
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>English</code> language option will only show links to translations in
+                        English.
+                    </li>
+                    <li>
+                        Specifying <code>alice marisa</code> in the included characters list will
+                        only include results that have both Alice and Marisa as character tags.
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_index', language='English', exclude_source=["db"]) }}">
+                    Show only English translations that have been typeset
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>English</code> language option will only show links to translations in
+                        English.
+                    </li>
+                    <li>
+                        Specifying <code>Danbooru</code> in the hidden websites list will hide links to Danbooru (which
+                        does not host typeset translations).
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_index', language='English', exclude_on_source=["ds"]) }}">
+                    Show works with English translations that aren't on Dynasty Scans
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>English</code> language option will only show links to translations in
+                        English.
+                    </li>
+                    <li>
+                        Specifying <code>Dynasty Scans</code> in the excluded websites list will hide results that
+                        contain any links to Dynasty Scans.
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_index', language='English', exclude_on_source=["eh", "ds", "md"]) }}">
+                    Find translated works on Danbooru that have not been typeset
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>English</code> language option will only show links to translations in
+                        English.
+                    </li>
+                    <li>
+                        Specifying <code>EH</code>, <code>Dynasty Scans</code>, and <code>MangaDex</code> in the
+                        excluded websites list will hide results that contain any links to English translations on EH,
+                        Dynasty Scans, or MangaDex (where typeset works can be found).
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_index', language='Japanese', exclude_on_language='English') }}">
+                    Find works that do not have any English translations yet
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        Selecting the <code>Japanese</code> language option will only show links to raws.
+                    </li>
+                    <li>
+                        Specifying <code>English</code> for the excluded language option will hide results that contain
+                        any links to English translations.
+                    </li>
+                </ul>
+            </dd>
+            <dt>
+                <a href="{{ url_for('route_book', key='ds-the_sparrows_midnight_dinning_ex_the_okamis_day') }}">
+                    Stir-fried bean sprouts
+                </a>
+            </dt>
+            <dd class="recipe-explanation">
+                <ul>
+                    <li>
+                        No explanation needed.
+                    </li>
+                </ul>
+            </dd>
+        </dl>
+    </section>
+{% endblock %}
