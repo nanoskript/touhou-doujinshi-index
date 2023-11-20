@@ -37,7 +37,15 @@
 {% endmacro %}
 
 {% block body %}
-    <form style="margin-top: 2rem;" action="/" method="get">
+    <script>
+      function disableEmptyInputs(form) {
+        const controls = form.elements;
+        for (let i = 0; i < controls.length; i++) {
+          controls[i].disabled = controls[i].value === "";
+        }
+      }
+    </script>
+    <form style="margin-top: 2rem;" action="/" method="get" onsubmit="disableEmptyInputs(this);">
         <div style="display: flex; gap: 1rem;">
             <input name="title" class="form-control" placeholder="Search by title" value="{{ request.args.title }}"/>
             <button type="Submit">Search</button>
