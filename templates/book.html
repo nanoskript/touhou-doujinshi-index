@@ -5,6 +5,11 @@
     {{ book.title | safe }}
 {% endblock %}
 
+{% block description %}
+    Read all translations of {{ book.title }}.
+    {{ build_description(book) }}
+{% endblock %}
+
 {% block head %}
     <meta property="og:description" content="{{ build_description(book) }}"/>
     <meta property="og:image" content="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"/>
