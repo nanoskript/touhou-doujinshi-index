@@ -44,7 +44,12 @@
         </div>
         <details style="margin: 1rem 0 2rem;">
             <summary>
-                <span>Advanced options</span>
+                <span>
+                    Advanced options
+                    {% if selected_count %}
+                        <b>({{ selected_count }})</b>
+                    {% endif %}
+                </span>
                 <b style="float: right;">
                     {{ pluralize(total_books, "result") }}.
                 </b>

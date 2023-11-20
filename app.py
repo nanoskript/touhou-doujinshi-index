@@ -203,12 +203,20 @@ def route_index():
     for row in query.offset((page - 1) * limit).limit(limit):
         books.append(build_book(row, f))
 
+    # Number of advanced options selected.
+    selected = set()
+    for key, value in request.args.items():
+        if value and key not in ["title", "page"]:
+            selected.add(key)
+
+    # Render.
     return render_template(
         "index.html",
         books=books,
         total_books=total_books,
         total_pages=total_pages,
         page=page,
+        selected_count=len(selected),
         languages=build_language_groups(),
         sources=ALL_SOURCE_TYPES,
     )
