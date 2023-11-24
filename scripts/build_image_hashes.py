@@ -9,6 +9,7 @@ from tqdm.contrib.concurrent import thread_map
 from scripts.data_comic_thproject_net import CTHEntry
 from scripts.data_doujinshi_org import OrgEntry
 from scripts.source_ds import DSEntry
+from scripts.source_mb import mb_entries
 from .entry import entry_key, Entry, entry_thumbnails
 from .source_db import DBEntry
 from .source_eh import EHEntry
@@ -78,6 +79,7 @@ def main():
         all_md_chapters(),
         OrgEntry.select(),
         CTHEntry.select(),
+        mb_entries(),
     ]
 
     for source in sources:

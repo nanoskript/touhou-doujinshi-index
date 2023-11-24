@@ -23,3 +23,26 @@ def create_thumbnail(data: bytes) -> bytes:
         thumbnail.thumbnail((256, 256))
         thumbnail.save(buffer, format="JPEG")
         return buffer.getvalue()
+
+
+# Strain HTML for performance.
+def strain_html(html: str, tag: str, pattern: str) -> str:
+    start = html.find(pattern)
+    position = start + 1
+    depth = 1
+
+    opening_tag = f"<{tag}"
+    closing_tag = f"</{tag}"
+    while depth > 0:
+        opening = html.find(opening_tag, position)
+        closing = html.find(closing_tag, position)
+
+        if opening != -1 and opening < closing:
+            depth += 1
+            position = opening + 1
+        else:
+            depth -= 1
+            position = closing + 1
+
+    position += len(closing_tag)
+    return html[start:position]

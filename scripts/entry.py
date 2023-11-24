@@ -9,6 +9,7 @@ from .data_doujinshi_org import OrgEntry, org_entry_release_date
 from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
 from .source_eh import EHEntry
+from .source_mb import MBDataEntry
 from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions
 
 Entry = Union[
@@ -18,6 +19,7 @@ Entry = Union[
     MDEntry,
     OrgEntry,
     CTHEntry,
+    MBDataEntry,
 ]
 
 
@@ -39,6 +41,8 @@ def entry_key(entry: Entry) -> str:
         return f"org-{entry.id}"
     if isinstance(entry, CTHEntry):
         return f"cth-{entry.id}"
+    if isinstance(entry, MBDataEntry):
+        return f"mb-{entry.id}"
 
 
 ALL_SOURCE_TYPES = {
@@ -48,6 +52,7 @@ ALL_SOURCE_TYPES = {
     "md": "MangaDex",
     "org": "doujinshi.org",
     "cth": "comic.thproject.net",
+    "mb": "Melonbooks",
 }
 
 
@@ -69,6 +74,8 @@ def entry_title(entry: Entry) -> str:
     if isinstance(entry, OrgEntry):
         return entry.title
     if isinstance(entry, CTHEntry):
+        return entry.title
+    if isinstance(entry, MBDataEntry):
         return entry.title
 
 
@@ -103,6 +110,8 @@ def entry_thumbnails(entry: Entry) -> list[bytes]:
         return [entry.thumbnail] if entry.thumbnail else None
     if isinstance(entry, CTHEntry):
         return [entry.thumbnail]
+    if isinstance(entry, MBDataEntry):
+        return [entry.thumbnail]
 
 
 def entry_date(entry: Entry) -> Optional[datetime]:
@@ -118,6 +127,8 @@ def entry_date(entry: Entry) -> Optional[datetime]:
         return org_entry_release_date(entry)
     if isinstance(entry, CTHEntry):
         return entry.release_date
+    if isinstance(entry, MBDataEntry):
+        return entry.release_date
 
 
 def entry_url(entry: Entry) -> Optional[str]:
@@ -131,6 +142,8 @@ def entry_url(entry: Entry) -> Optional[str]:
         return f"https://mangadex.org/chapter/{entry.slug}"
     if isinstance(entry, CTHEntry):
         return f"http://comic.thproject.net/showinfo.php?id={entry.id}"
+    if isinstance(entry, MBDataEntry):
+        return f"https://www.melonbooks.co.jp/detail/detail.php?product_id={entry.id}"
 
 
 # If absent, the entry is considered to be metadata-only.
@@ -167,6 +180,8 @@ def entry_page_count(entry: Entry) -> Optional[int]:
     if isinstance(entry, OrgEntry):
         return entry.pages
     if isinstance(entry, CTHEntry):
+        return entry.pages
+    if isinstance(entry, MBDataEntry):
         return entry.pages
 
 
@@ -214,4 +229,7 @@ def entry_descriptions(entry: Entry) -> dict[str, str]:
     if isinstance(entry, OrgEntry):
         if entry.comments:
             return {"doujinshi.org comments": entry.comments}
+    if isinstance(entry, MBDataEntry):
+        if entry.comments:
+            return {"Melonbooks description (Japanese)": entry.comments}
     return {}

@@ -1,11 +1,17 @@
+import dataclasses
 import time
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
+from lxml.cssselect import CSSSelector
 from peewee import Model, SqliteDatabase, IntegerField, CharField, BlobField
 from requests.adapters import HTTPAdapter
 from urllib3.util import create_urllib3_context
 import urllib.parse
+from lxml import etree
+
+from .utility import strain_html
 
 # Outdated cipher is being used.
 CIPHER = "ALL:@SECLEVEL=1"
@@ -34,6 +40,57 @@ class MBEntry(BaseModel):
 
 session = requests.Session()
 session.mount("https://", CustomCipherAdapter())
+
+
+@dataclasses.dataclass()
+class MBDataEntry:
+    id: int
+    title: str
+    pages: int
+    release_date: datetime
+    comments: str
+    thumbnail: bytes
+
+
+def mb_entries() -> list[MBDataEntry]:
+    entries = []
+    select_comments = CSSSelector(".item-detail.mt24")
+    select_table_headers = CSSSelector("th")
+    for entry in MBEntry.select():
+        page = strain_html(entry.data, "div", '<div class="item-page">')
+        tree = etree.HTML(page)
+        if not entry.thumbnail:
+            continue
+
+        table = {}
+        for header in select_table_headers(tree):
+            table[header.text] = header.getnext().text.strip()
+
+        release_date = None
+        release_date_key = "発行日"
+        if release_date_key in table:
+            release_date = datetime.strptime(table[release_date_key], "%Y/%m/%d")
+
+        pages = None
+        pages_key = "総ページ数・CG数・曲数"
+        if pages_key in table:
+            pages = int(table[pages_key])
+
+        comments = []
+        for comment in select_comments(tree):
+            heading = comment.find("h3")
+            content = etree.tostring(heading.getnext(), encoding="unicode")
+            comments.append(f"<b>{heading.text}</b>\n{content}")
+
+        entries.append(MBDataEntry(
+            id=entry.id,
+            title=tree.find(".//h1").text,
+            pages=pages,
+            release_date=release_date,
+            comments=("<br/>".join(comments)),
+            thumbnail=entry.thumbnail,
+        ))
+    return entries
 
 
 def get(url, **kwargs):
