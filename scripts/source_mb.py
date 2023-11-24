@@ -79,7 +79,7 @@ def mb_entries() -> list[MBDataEntry]:
         comments = []
         for comment in select_comments(tree):
             heading = comment.find("h3")
-            content = etree.tostring(heading.getnext(), encoding="unicode")
+            content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
             comments.append(f"<b>{heading.text}</b>\n{content}")
 
         entries.append(MBDataEntry(
