@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from peewee import SqliteDatabase, Model, IntegerField, CharField, BlobField
 
+from scripts.utility import get_with_proxy
+
 db = SqliteDatabase("data/tora.db")
 
 
@@ -20,7 +22,7 @@ def source_tora():
     page_number = 1
     while True:
         print(f"[page] {page_number}")
-        response = requests.get(
+        response = get_with_proxy(
             "https://ecs.toranoana.jp/tora/ec/app/catalog/list",
             params={
                 "coterieGenreCode1": "GNRN00000696",
@@ -45,7 +47,7 @@ def source_tora():
             # FIXME: Handle empty thumbnail.
             thumbnail = requests.get(image_url).content
             product_url = f"https://ecs.toranoana.jp/tora/ec/item/{product_id}/"
-            data = requests.get(product_url).content
+            data = get_with_proxy(product_url).content
             ToraEntry.create(
                 id=product_id,
                 data=data,

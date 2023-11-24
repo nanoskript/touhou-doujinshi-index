@@ -1,5 +1,9 @@
 import io
+import os
 from typing import TypeVar
+from urllib.parse import urlencode
+
+import requests
 from PIL import Image, ImageFile
 
 T = TypeVar("T")
@@ -46,3 +50,14 @@ def strain_html(html: str, tag: str, pattern: str) -> str:
 
     position += len(closing_tag)
     return html[start:position]
+
+
+def get_with_proxy(url: str, params: dict[str, str] = None):
+    return requests.get(
+        "https://api.scrapingant.com/v2/general",
+        params={
+            "url": f"{url}?{urlencode(params or {})}",
+            "x-api-key": os.environ["SCRAPINGANT_API_KEY"],
+            "browser": "false",
+        }
+    )
