@@ -31,9 +31,18 @@ body {
 
 .book-container-title {
     grid-area: title;
+}
+
+.book-container-title h3 {
     font-size: x-large;
     line-height: 1.4;
     margin: 0;
+}
+
+.book-container-title h4 {
+    font-size: large;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
 }
 
 .book-container-main {

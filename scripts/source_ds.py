@@ -1,4 +1,4 @@
-import io
+from typing import Optional
 
 import PIL
 import requests
@@ -51,6 +51,12 @@ def ds_entry_tags(entry: DSEntry) -> list[str]:
         if tag["type"] in ["General", "Pairing"]:
             tags.append(tag["name"])
     return tags
+
+
+def ds_entry_series(entry: DSEntry) -> Optional[dict]:
+    for tag in entry.data["tags"]:
+        if tag["type"] == "Series":
+            return tag
 
 
 def main():

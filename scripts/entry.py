@@ -7,7 +7,7 @@ from typing import Union, Optional
 from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
 from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
-from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags
+from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series
 from .source_eh import EHEntry
 from .source_mb import MBDataEntry
 from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions
@@ -233,3 +233,20 @@ def entry_descriptions(entry: Entry) -> dict[str, str]:
         if entry.comments:
             return {"Melonbooks description (Japanese)": entry.comments}
     return {}
+
+
+@dataclasses.dataclass(frozen=True, eq=True)
+class EntrySeries:
+    key: str
+    title: str
+
+
+def entry_series(entry: Entry) -> Optional[EntrySeries]:
+    if isinstance(entry, MDEntry):
+        key = f"md-{entry.manga.slug}"
+        return EntrySeries(key=key, title=entry_book_title(entry))
+    if isinstance(entry, DSEntry):
+        tag = ds_entry_series(entry)
+        if tag:
+            key = f"ds-{tag['permalink']}"
+            return EntrySeries(key, title=tag["name"])

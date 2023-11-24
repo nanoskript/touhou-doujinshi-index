@@ -47,7 +47,9 @@
     </script>
     <form style="margin-top: 2rem;" action="/" method="get" onsubmit="disableEmptyInputs(this);">
         <div style="display: flex; gap: 1rem;">
-            <input name="title" class="form-control" placeholder="Search by title" value="{{ request.args.title }}"/>
+            <input name="title" class="form-control"
+                   placeholder="Search by title or series"
+                   value="{{ request.args.title }}"/>
             <button type="Submit">Search</button>
         </div>
         <details style="margin: 1rem 0 2rem;">

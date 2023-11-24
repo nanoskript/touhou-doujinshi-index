@@ -6,11 +6,21 @@
                      alt="{{ book.title | safe }}"/>
             </div>
         </figure>
-        <h3 class="book-container-title">
-            <a href="/book/{{ book.entries[0].id }}" rel="nofollow">
-                {{ book.title | safe }}
-            </a>
-        </h3>
+        <div class="book-container-title">
+            <h3>
+                <a href="/book/{{ book.entries[0].id }}" rel="nofollow">
+                    {{ book.title | safe }}
+                </a>
+            </h3>
+            {% if book.series %}
+                <h4>
+                    Series:
+                    <a href="{{ url_for('route_index', title=book.series) }}">
+                        {{ book.series }}
+                    </a>
+                </h4>
+            {% endif %}
+        </div>
         <div class="book-container-main">
             {% if book.tags or book.characters %}
                 <div>

@@ -3,6 +3,7 @@ import datetime
 import io
 import json
 import math
+from typing import Optional
 
 import peewee
 import timeago
@@ -19,6 +20,7 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
 @dataclasses.dataclass()
 class BookData:
     title: str
+    series: Optional[str]
     thumbnail_id: str
     tags: list[str]
     characters: list[str]
@@ -68,6 +70,7 @@ def build_book(book: int, f: EntriesFilter) -> BookData:
 
     return BookData(
         title=book.title,
+        series=(book.series and book.series.title),
         thumbnail_id=book.thumbnail_id,
         tags=tags,
         characters=characters,
@@ -115,9 +118,14 @@ def build_full_query(
     query = filter_entries(query, f)
 
     if title:
+        books_by_series = (IndexBook.select()
+                           .join(IndexSeries)
+                           .where(IndexSeries.title.contains(title)))
+
         query = query.where(
             IndexBook.title.contains(title) |
-            IndexEntry.title.contains(title)
+            IndexEntry.title.contains(title) |
+            (IndexBook.id << books_by_series)
         )
 
     for tag in must_include_tags:

@@ -15,9 +15,15 @@ class IndexThumbnail(BaseModel):
     data = BlobField()
 
 
+class IndexSeries(BaseModel):
+    id = IntegerField(primary_key=True)
+    title = CharField()
+
+
 class IndexBook(BaseModel):
     id = IntegerField(primary_key=True)
     title = CharField()
+    series = ForeignKeyField(IndexSeries, null=True)
     thumbnail = ForeignKeyField(IndexThumbnail)
 
 

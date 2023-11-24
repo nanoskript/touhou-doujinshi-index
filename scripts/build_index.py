@@ -1,4 +1,5 @@
 from tqdm import tqdm
+from scipy.cluster.hierarchy import DisjointSet
 
 from scripts.source_ds import filter_ds_entries
 from scripts.source_mb import mb_entries
@@ -89,6 +90,35 @@ def entry_list_canonical(entry_list: EntryList) -> Optional[Entry]:
     return entry_list.entries[0]
 
 
+# Assumes entry list indices will be identical to book IDs.
+def coalesce_book_series(lists: list[EntryList]) -> dict[EntrySeries, list[int]]:
+    # Combine overlapping series.
+    tree = DisjointSet([])
+    for item in lists:
+        last_series = None
+        for entry in item.entries:
+            series = entry_series(entry)
+            if series:
+                tree.add(series)
+                if last_series is not None:
+                    tree.merge(last_series, series)
+                last_series = series
+
+    # Determine series for each book.
+    pools = defaultdict(list)
+    for book_id, item in enumerate(lists):
+        for entry in item.entries:
+            series = entry_series(entry)
+            if series:
+                pools[tree[series]].append(book_id)
+                break
+
+    # Only accept series with more than two books.
+    return {series: book_ids
+            for series, book_ids in pools.items()
+            if len(book_ids) > 1}
+
+
 def main():
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
@@ -114,11 +144,13 @@ def main():
         IndexTag,
         IndexBookTag,
         IndexBookDescription,
+        IndexSeries,
         IndexThumbnail,
     ]
 
     db.connect()
     character_index = CharacterIndex()
+    series_pools = coalesce_book_series(lists)
     batch_size = 10000
 
     with db.atomic():
@@ -131,9 +163,18 @@ def main():
         ) for item in tqdm(lists)]
         IndexThumbnail.bulk_create(thumbnails, batch_size)
 
+        series, book_series = [], {}
+        for index, (model, book_ids) in enumerate(series_pools.items()):
+            model = IndexSeries(id=index, title=model.title)
+            series.append(model)
+            for book in book_ids:
+                book_series[book] = model
+        IndexSeries.bulk_create(series, batch_size)
+
         books = [IndexBook(
             id=index,
             title=entry_book_title(entry_list_canonical(item)),
+            series=book_series.get(index, None),
             thumbnail=thumbnail,
         ) for (index, item), thumbnail in zip(enumerate(tqdm(lists)), thumbnails)]
         IndexBook.bulk_create(books, batch_size)
