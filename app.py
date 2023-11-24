@@ -7,7 +7,7 @@ from typing import Optional
 
 import peewee
 import timeago
-from flask import Flask, render_template, send_file, request
+from flask import Flask, render_template, send_file, request, url_for, make_response
 from peewee import fn
 
 from scripts.entry import entry_key_readable_source, ALL_SOURCE_TYPES
@@ -15,6 +15,8 @@ from scripts.index import *
 
 app = Flask(__name__)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
+
+SITEMAP_URL_LIMIT = 5000
 
 
 @dataclasses.dataclass()
@@ -268,6 +270,43 @@ def route_about():
 @app.route("/recipes")
 def route_recipes():
     return render_template("recipes.html")
+
+
+def as_xml(xml: str):
+    response = make_response(xml)
+    response.headers["Content-Type"] = "application/xml"
+    return response
+
+
+@app.route("/sitemap.xml")
+def route_sitemap_index():
+    book_page_count = math.ceil(IndexBook.select().count() / SITEMAP_URL_LIMIT)
+    book_sitemaps = [url_for("route_sitemap_books", page=page)
+                     for page in range(book_page_count)]
+
+    return as_xml(render_template("sitemap_index.xml", paths=[
+        url_for("route_sitemap_static"),
+        *book_sitemaps,
+    ]))
+
+
+@app.route("/sitemap/static.xml")
+def route_sitemap_static():
+    return as_xml(render_template("sitemap.xml", paths=[
+        url_for("route_index"),
+        url_for("route_recipes"),
+        url_for("route_about"),
+    ]))
+
+
+@app.route("/sitemap/books/<int:page>.xml")
+def route_sitemap_books(page: int):
+    paths = [url_for("route_book", key=row.id)
+             for row in (IndexEntry.select(IndexEntry.id)
+                         .group_by(IndexEntry.book)
+                         .limit(SITEMAP_URL_LIMIT)
+                         .offset(page * SITEMAP_URL_LIMIT))]
+    return as_xml(render_template("sitemap.xml", paths=paths))
 
 
 @app.errorhandler(peewee.OperationalError)
