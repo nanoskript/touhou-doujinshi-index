@@ -96,6 +96,7 @@ def source_tora():
             print(f"[page] {page_number}")
             response = get_with_proxy(
                 base_url,
+                retries=10,
                 params={
                     **params,
                     "currentPage": str(page_number),
@@ -118,7 +119,7 @@ def source_tora():
                 # FIXME: Handle empty thumbnail.
                 thumbnail = requests.get(image_url).content
                 product_url = f"https://ecs.toranoana.jp/tora/ec/item/{product_id}/"
-                data = get_with_proxy(product_url).content
+                data = get_with_proxy(product_url, retries=10).content
                 ToraEntry.create(
                     id=product_id,
                     data=data,
