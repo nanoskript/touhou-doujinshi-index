@@ -3,6 +3,7 @@ from scipy.cluster.hierarchy import DisjointSet
 
 from scripts.source_ds import filter_ds_entries
 from scripts.source_mb import mb_entries
+from scripts.source_tora import tora_entries
 from .character_index import CharacterIndex
 from .source_md import all_md_chapters
 from .entry import *
@@ -132,6 +133,8 @@ def main():
     for entry in tqdm(CTHEntry.select()):
         tree.add_or_create(entry, similarity=0.9)
     for entry in tqdm(mb_entries()):
+        tree.add_or_create(entry, similarity=0.9)
+    for entry in tqdm(tora_entries()):
         tree.add_or_create(entry, similarity=0.9)
     lists = tree.all_entry_lists()
 

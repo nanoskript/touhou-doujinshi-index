@@ -3,13 +3,14 @@ import io
 import PIL
 import imagehash
 from peewee import SqliteDatabase, Model, CharField
-from PIL import Image
+from PIL import Image, ImageChops
 from tqdm.contrib.concurrent import thread_map
 
 from scripts.data_comic_thproject_net import CTHEntry
 from scripts.data_doujinshi_org import OrgEntry
 from scripts.source_ds import DSEntry
 from scripts.source_mb import mb_entries
+from scripts.source_tora import tora_entries
 from .entry import entry_key, Entry, entry_thumbnails
 from .source_db import DBEntry
 from .source_eh import EHEntry
@@ -39,12 +40,31 @@ def image_hash(image: Image, size: int) -> str:
     return str(imagehash.phash(image, hash_size=size))
 
 
+def trim_borders(image: Image):
+    width, height = image.size
+    background = Image.new(image.mode, image.size, image.getpixel((0, 0)))
+    difference = ImageChops.difference(image, background)
+    difference = ImageChops.add(difference, difference, 2.0, -100)
+    bbox = difference.getbbox()
+    if bbox and bbox != (0, 0, width, height):
+        return image.crop(bbox)
+
+
 def entry_candidate_images(entry: Entry) -> list[Image]:
     base_images = [
         Image.open(io.BytesIO(data))
         for data in entry_thumbnails(entry)
     ]
 
+    # Remove borders.
+    images = base_images.copy()
+    for image in base_images:
+        trimmed = trim_borders(image)
+        if trimmed:
+            images.append(trimmed)
+    base_images = images
+
+    # Consider orientations.
     images = base_images.copy()
     for image in base_images:
         width, height = image.size
@@ -80,6 +100,7 @@ def main():
         OrgEntry.select(),
         CTHEntry.select(),
         mb_entries(),
+        tora_entries(),
     ]
 
     for source in sources:
