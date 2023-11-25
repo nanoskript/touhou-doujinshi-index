@@ -44,41 +44,44 @@ def filter_entries(query, f: EntriesFilter):
     return query
 
 
-def build_book(book: int, f: EntriesFilter) -> BookData:
-    book = IndexBook.get_by_id(book)
-    tags = [row.name for row in
-            (IndexTag.select().join(IndexBookTag)
-             .where(IndexBookTag.book == book)
-             .order_by(IndexBookTag.tag.name)
-             .distinct())]
+def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
+    models = (IndexBook.select()
+              .where(IndexBook.id << book_ids)
+              .order_by(IndexBook.id))
 
-    characters = [row.name for row in
-                  (IndexCharacter.select().join(IndexBookCharacter)
-                   .where(IndexBookCharacter.book == book)
-                   .order_by(IndexBookCharacter.character)
-                   .distinct())]
+    tags = (IndexBookTag
+            .select(IndexBookTag, IndexTag)
+            .join(IndexTag)
+            .order_by(IndexTag.name))
 
-    descriptions = list(IndexBookDescription.select()
-                        .where(IndexBookDescription.book == book)
-                        .order_by(IndexBookDescription.name))
+    characters = (IndexBookCharacter
+                  .select(IndexBookCharacter, IndexCharacter)
+                  .join(IndexCharacter)
+                  .order_by(IndexCharacter.name))
 
-    query = IndexEntry.select().where(IndexEntry.book == book)
+    descriptions = (IndexBookDescription.select()
+                    .order_by(IndexBookDescription.name))
+
+    query = IndexEntry.select()
     query = filter_entries(query, f)
-    entries = list(query.order_by(
+    entries = query.order_by(
         IndexEntry.language,
         IndexEntry.date.desc(),
         IndexEntry.title.desc(),
-    ))
-
-    return BookData(
-        title=book.title,
-        series=(book.series and book.series.title),
-        thumbnail_id=book.thumbnail_id,
-        tags=tags,
-        characters=characters,
-        descriptions=descriptions,
-        entries=entries,
     )
+
+    books = {}
+    for book in peewee.prefetch(models, tags, characters, descriptions, entries):
+        books[book.id] = BookData(
+            title=book.title,
+            series=(book.series and book.series.title),
+            thumbnail_id=book.thumbnail_id,
+            tags=[row.tag.name for row in book.indexbooktag_set],
+            characters=[row.character.name for row in book.indexbookcharacter_set],
+            descriptions=book.indexbookdescription_set,
+            entries=book.indexentry_set,
+        )
+    return books
 
 
 @app.template_filter("age")
@@ -169,6 +172,7 @@ def build_full_query(
             .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.title.desc()))
 
 
+# FIXME: Currently performs a full table scan.
 def build_language_groups() -> list[tuple[str, list[str]]]:
     common = ["Japanese", "English", "Chinese", "Spanish"]
     special = ["Speechless", "Text Cleaned"]
@@ -202,17 +206,21 @@ def route_index():
         f=f,
     )
 
-    # FIXME: Optimize count and select into single query.
-    # Calculate statistics.
+    # Perform count and selection in single query.
     limit = 20
-    total_books = query.count()
-    total_pages = math.ceil(total_books / limit)
-
-    # Retrieve dataset.
-    books = []
     page = int(request.args.get("page", 1))
-    for row in query.offset((page - 1) * limit).limit(limit):
-        books.append(build_book(row, f))
+    total_column = fn.Count("*").over().alias("total")
+    query = (IndexBook.select(total_column, peewee.SQL("*"))
+             .from_(query).paginate(page, limit))
+
+    total_books, book_ids = 0, []
+    for result in query:
+        total_books = result.total
+        book_ids.append(result.id)
+
+    total_pages = math.ceil(total_books / limit)
+    book_data = build_books(book_ids, f)
+    books = [book_data[book] for book in book_ids]
 
     # Number of advanced options selected.
     selected = set()
@@ -244,9 +252,10 @@ def route_book(key: str):
         return " ".join(lines)
 
     book_id = IndexEntry.get_by_id(key).book_id
+    book = build_books([book_id], EntriesFilter())[book_id]
     return render_template(
         "book.html",
-        book=build_book(book_id, EntriesFilter()),
+        book=book,
         build_description=build_description,
     )
 
