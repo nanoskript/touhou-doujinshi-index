@@ -182,7 +182,7 @@ def render_pool_descriptions():
         strings = [entry.data["description"] for entry in batch]
 
         results = requests.post(
-            f"https://dtext.nsk.dev/dtext-parse",
+            f"https://dtext.nsk.sh/dtext-parse",
             headers=HEADERS,
             json=strings,
         ).json()
