@@ -46,14 +46,14 @@ def filter_entries(query, f: EntriesFilter):
 
 def build_book(book: int, f: EntriesFilter) -> BookData:
     book = IndexBook.get_by_id(book)
-    tags = [str(row.tag) for row in
-            (IndexBookTag.select()
+    tags = [row.name for row in
+            (IndexTag.select().join(IndexBookTag)
              .where(IndexBookTag.book == book)
-             .order_by(IndexBookTag.tag)
+             .order_by(IndexBookTag.tag.name)
              .distinct())]
 
-    characters = [str(row.character) for row in
-                  (IndexBookCharacter.select()
+    characters = [row.name for row in
+                  (IndexCharacter.select().join(IndexBookCharacter)
                    .where(IndexBookCharacter.book == book)
                    .order_by(IndexBookCharacter.character)
                    .distinct())]
@@ -202,6 +202,7 @@ def route_index():
         f=f,
     )
 
+    # FIXME: Optimize count and select into single query.
     # Calculate statistics.
     limit = 20
     total_books = query.count()
@@ -242,10 +243,10 @@ def route_book(key: str):
             lines.append(f"Characters: {', '.join(b.characters)}.")
         return " ".join(lines)
 
-    book = IndexEntry.get_by_id(key).book
+    book_id = IndexEntry.get_by_id(key).book_id
     return render_template(
         "book.html",
-        book=build_book(book, EntriesFilter()),
+        book=build_book(book_id, EntriesFilter()),
         build_description=build_description,
     )
 
