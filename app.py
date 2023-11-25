@@ -13,7 +13,7 @@ from peewee import fn
 from scripts.entry import entry_key_readable_source, ALL_SOURCE_TYPES
 from scripts.index import *
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="")
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60
 
 SITEMAP_URL_LIMIT = 5000
