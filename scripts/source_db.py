@@ -29,6 +29,11 @@ class DBCharacter(BaseModel):
     data = JSONField()
 
 
+class DBComments(BaseModel):
+    pool = ForeignKeyField(DBEntry, unique=True)
+    comments = JSONField()
+
+
 class DBPoolDescription(BaseModel):
     pool = ForeignKeyField(DBEntry, unique=True)
     html = CharField()
@@ -173,6 +178,45 @@ def scrape_artists():
             )
 
 
+def gather_comments(post_ids: list[int], batch_size: int = 200):
+    comments = []
+    response_limit = 1000
+    for start in range(0, len(post_ids), batch_size):
+        print(f"[comments/chunk] {start} / {len(post_ids)}")
+        ids = post_ids[start:start + batch_size]
+        response = requests.get(
+            f"https://danbooru.donmai.us/comments.json",
+            headers=HEADERS,
+            params={
+                "search[post_id]": ",".join(map(str, ids)),
+                "limit": response_limit,
+            },
+        ).json()
+
+        # Retry with lower batch size if limit reached.
+        if len(response) == response_limit:
+            new_batch_size = batch_size // 2
+            return gather_comments(post_ids, batch_size=new_batch_size)
+        comments += response
+    return comments
+
+
+def scrape_comments():
+    for entry in DBEntry.select():
+        print(f"[comments/pool] {entry.pool_id}")
+        ids = [post["id"] for post in entry.posts]
+        comments = gather_comments(ids)
+
+        (DBComments.delete()
+         .where(DBComments.pool == entry)
+         .execute())
+
+        DBComments.create(
+            pool=entry,
+            comments=comments,
+        )
+
+
 def render_pool_descriptions():
     batch_size = 1000
     entries = list(DBEntry.select())
@@ -203,11 +247,13 @@ def main():
     db.create_tables([
         DBEntry,
         DBArtist,
+        DBComments,
         DBPoolDescription,
     ])
 
     scrape_pools()
     scrape_artists()
+    scrape_comments()
     render_pool_descriptions()
 
 

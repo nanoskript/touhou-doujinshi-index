@@ -81,6 +81,10 @@ body {
     line-height: 1.4;
 }
 
+.book-container-main .entry-box .entry-box-attributes > * {
+    white-space: nowrap;
+}
+
 .pagination {
     margin: 3rem 0;
     display: flex;

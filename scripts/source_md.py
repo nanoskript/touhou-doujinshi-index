@@ -5,7 +5,7 @@ import time
 import PIL
 import mistletoe
 import requests
-from peewee import SqliteDatabase, Model, BlobField, CharField
+from peewee import SqliteDatabase, Model, BlobField, CharField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 
 from .utility import HEADERS, create_thumbnail
@@ -32,6 +32,12 @@ class MDChapter(BaseModel):
     thumbnail = BlobField()
 
 
+class MDStatistics(BaseModel):
+    manga = ForeignKeyField(MDManga, unique=True)
+    title = JSONField()
+    chapters = JSONField()
+
+
 @dataclasses.dataclass()
 class MDEntry:
     manga: MDManga
@@ -40,6 +46,7 @@ class MDEntry:
     title: str
     date: str
     pages: int
+    comments: int
     thumbnail: bytes
 
 
@@ -96,9 +103,16 @@ def md_manga_descriptions(manga: MDManga) -> dict[str, str]:
     return descriptions
 
 
+def md_manga_comments(manga: MDManga) -> int:
+    statistics = MDStatistics.get(manga=manga)
+    title_comments = statistics.title["comments"]
+    return (title_comments and title_comments["repliesCount"]) or 0
+
+
 def all_md_chapters() -> list[MDEntry]:
     chapters = []
     for manga in MDManga.select():
+        statistics = MDStatistics.get(manga=manga)
         for chapter in manga.chapters:
             def chapter_title():
                 tokens = []
@@ -118,6 +132,10 @@ def all_md_chapters() -> list[MDEntry]:
                 data = MDChapter.get_or_none(MDChapter.slug == chapter["id"])
                 return data.thumbnail if data else manga.thumbnail
 
+            def chapter_comments():
+                comments = statistics.chapters[chapter["id"]]["comments"]
+                return comments and comments["repliesCount"]
+
             assert chapter["type"] == "chapter"
             chapters.append(MDEntry(
                 manga=manga,
@@ -126,6 +144,7 @@ def all_md_chapters() -> list[MDEntry]:
                 title=chapter_title(),
                 date=chapter["attributes"]["publishAt"],
                 pages=int(chapter["attributes"]["pages"]),
+                comments=chapter_comments(),
                 thumbnail=chapter_thumbnail(),
             ))
     return chapters
@@ -265,15 +284,50 @@ def scrape_chapters():
             )
 
 
+def scrape_statistics():
+    batch_limit = 100
+    for manga in MDManga.select():
+        print(f"[statistics/manga] {manga.slug}")
+        title = requests.get(
+            f"{BASE_URL}/statistics/manga/{manga.slug}",
+            headers=HEADERS,
+        ).json()["statistics"][manga.slug]
+
+        chapter_uuids = []
+        for chapter in manga.chapters:
+            chapter_uuids.append(chapter["id"])
+
+        chapters = {}
+        for start in range(0, len(chapter_uuids), batch_limit):
+            batch = chapter_uuids[start:start + batch_limit]
+            chapters.update(requests.get(
+                f"{BASE_URL}/statistics/chapter",
+                headers=HEADERS,
+                params={"chapter[]": batch}
+            ).json()["statistics"])
+
+        (MDStatistics.delete()
+         .where(MDStatistics.manga == manga)
+         .execute())
+
+        MDStatistics.create(
+            manga=manga,
+            title=title,
+            chapters=chapters,
+        )
+
+
 def main():
     db.connect()
     db.create_tables([
         MDManga,
         MDChapter,
+        MDStatistics,
     ])
 
     scrape_manga()
     scrape_chapters()
+    scrape_statistics()
 
 
 if __name__ == '__main__':

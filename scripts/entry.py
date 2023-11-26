@@ -6,11 +6,12 @@ from typing import Union, Optional
 
 from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
-from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription
-from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series
+from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments
+from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments, \
+    ds_series_comments
 from .source_eh import EHEntry
 from .source_mb import MBDataEntry
-from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions
+from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions, md_manga_comments
 from .source_tora import ToraDataEntry
 
 Entry = Union[
@@ -250,18 +251,31 @@ def entry_descriptions(entry: Entry) -> dict[str, str]:
     return {}
 
 
-@dataclasses.dataclass(frozen=True, eq=True)
+def entry_comments(entry: Entry) -> Optional[int]:
+    if isinstance(entry, DBEntry):
+        return len(DBComments.get(pool=entry).comments)
+    if isinstance(entry, DSEntry):
+        return ds_entry_comments(entry)
+    if isinstance(entry, MDEntry):
+        return entry.comments
+
+
+@dataclasses.dataclass()
 class EntrySeries:
     key: str
     title: str
+    comments: int
 
 
 def entry_series(entry: Entry) -> Optional[EntrySeries]:
     if isinstance(entry, MDEntry):
         key = f"md-{entry.manga.slug}"
-        return EntrySeries(key=key, title=entry_book_title(entry))
+        title = entry_book_title(entry)
+        comments = md_manga_comments(entry.manga)
+        return EntrySeries(key=key, title=title, comments=comments)
     if isinstance(entry, DSEntry):
         tag = ds_entry_series(entry)
         if tag:
             key = f"ds-{tag['permalink']}"
-            return EntrySeries(key, title=tag["name"])
+            comments = ds_series_comments(tag["name"])
+            return EntrySeries(key, title=tag["name"], comments=comments)

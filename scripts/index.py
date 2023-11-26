@@ -18,6 +18,7 @@ class IndexThumbnail(BaseModel):
 class IndexSeries(BaseModel):
     id = IntegerField(primary_key=True)
     title = CharField()
+    comments = IntegerField(null=True)
 
 
 class IndexBook(BaseModel):
@@ -59,3 +60,4 @@ class IndexEntry(BaseModel):
     date = DateTimeUTCField(index=True, null=True)
     language = CharField(index=True, null=True)
     page_count = IntegerField(null=True)
+    comments = IntegerField(null=True)

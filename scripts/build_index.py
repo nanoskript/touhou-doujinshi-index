@@ -92,32 +92,52 @@ def entry_list_canonical(entry_list: EntryList) -> Optional[Entry]:
 
 
 # Assumes entry list indices will be identical to book IDs.
-def coalesce_book_series(lists: list[EntryList]) -> dict[EntrySeries, list[int]]:
-    # Combine overlapping series.
-    tree = DisjointSet([])
-    for item in lists:
-        last_series = None
-        for entry in item.entries:
-            series = entry_series(entry)
-            if series:
-                tree.add(series)
-                if last_series is not None:
-                    tree.merge(last_series, series)
-                last_series = series
-
-    # Determine series for each book.
-    pools = defaultdict(list)
+def coalesce_book_series(lists: list[EntryList]) -> list[tuple[EntrySeries, list[int]]]:
+    book_series: dict[int, list[EntrySeries]] = defaultdict(list)
     for book_id, item in enumerate(lists):
         for entry in item.entries:
             series = entry_series(entry)
             if series:
-                pools[tree[series]].append(book_id)
-                break
+                book_series[book_id].append(series)
+
+    # Populate and combine overlapping series.
+    series_by_key = {}
+    tree = DisjointSet([])
+    for series_list in book_series.values():
+        last_series_key = None
+        for series in series_list:
+            tree.add(series.key)
+            series_by_key[series.key] = series
+            if last_series_key is not None:
+                tree.merge(last_series_key, series.key)
+            last_series_key = series.key
+
+    # Generate mappings between series.
+    roots: dict[str, tuple[EntrySeries, list[int]]] = {}
+    roots_by_key: dict[str, str] = {}
+    for subset in map(list, tree.subsets()):
+        root, others = subset[0], subset[1:]
+        root_series = series_by_key[root]
+
+        for key in others:
+            series = series_by_key[key]
+            root_series.comments += series.comments
+            roots_by_key[key] = root
+
+        roots[root] = root_series, []
+        roots_by_key[root] = root
+
+    # Determine series for each book.
+    for book_id, series_list in book_series.items():
+        for series in series_list:
+            series, book_ids = roots[roots_by_key[series.key]]
+            book_ids.append(book_id)
+            break
 
     # Only accept series with more than two books.
-    return {series: book_ids
-            for series, book_ids in pools.items()
-            if len(book_ids) > 1}
+    return [(series, book_ids)
+            for series, book_ids in roots.values()
+            if len(book_ids) > 1]
 
 
 def main():
@@ -167,8 +187,13 @@ def main():
         IndexThumbnail.bulk_create(thumbnails, batch_size)
 
         series, book_series = [], {}
-        for index, (model, book_ids) in enumerate(series_pools.items()):
-            model = IndexSeries(id=index, title=model.title)
+        for index, (model, book_ids) in enumerate(series_pools):
+            model = IndexSeries(
+                id=index,
+                title=model.title,
+                comments=model.comments,
+            )
+
             series.append(model)
             for book in book_ids:
                 book_series[book] = model
@@ -217,6 +242,7 @@ def main():
                 date=entry_date(entry),
                 language=entry_language(entry),
                 page_count=entry_page_count(entry),
+                comments=entry_comments(entry),
             )
             for item, book in zip(tqdm(lists), books)
             for entry in item.entries

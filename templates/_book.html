@@ -62,7 +62,7 @@
                                 {{ entry.title | safe }}
                             {% endif %}
                         </div>
-                        <div>
+                        <div class="entry-box-attributes">
                             {% if entry.language %}
                                 <b>{{ entry.language }}</b>
                             {% else %}
@@ -78,6 +78,10 @@
                                       title="{{ entry.date.strftime('%-d %B %Y') }}">
                                     <b>{{ entry.date | age }}</b>
                                 </time>
+                            {% endif %}
+                            {% if entry.comments %}
+                                •
+                                <b>{{ pluralize(entry.comments, "comment") }}</b>
                             {% endif %}
                         </div>
                     </div>
