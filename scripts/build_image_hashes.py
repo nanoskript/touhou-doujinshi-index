@@ -89,23 +89,24 @@ def process_entry(entry: Entry):
 
 def main():
     db.connect()
-    db.drop_tables([ImageHash])
-    db.create_tables([ImageHash])
+    with db.atomic():
+        db.drop_tables([ImageHash])
+        db.create_tables([ImageHash])
 
-    sources = [
-        EHEntry.select(),
-        DBEntry.select(),
-        DSEntry.select(),
-        all_md_chapters(),
-        OrgEntry.select(),
-        CTHEntry.select(),
-        mb_entries(),
-        tora_entries(),
-    ]
+        sources = [
+            EHEntry.select(),
+            DBEntry.select(),
+            DSEntry.select(),
+            all_md_chapters(),
+            OrgEntry.select(),
+            CTHEntry.select(),
+            mb_entries(),
+            tora_entries(),
+        ]
 
-    for source in sources:
-        hashes = thread_map(process_entry, source)
-        ImageHash.bulk_create(filter(None, hashes))
+        for source in sources:
+            hashes = thread_map(process_entry, source)
+            ImageHash.bulk_create(filter(None, hashes))
 
 
 if __name__ == '__main__':
