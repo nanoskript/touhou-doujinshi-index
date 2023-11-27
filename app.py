@@ -306,7 +306,7 @@ def route_popular():
     total_books, comments, book_ids = 0, [], []
     for result in query:
         total_books = result.total
-        comments.append(result.comments)
+        comments.append(result.comments or 0)
         book_ids.append(result.id)
 
     total_pages = math.ceil(total_books / limit)
