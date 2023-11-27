@@ -288,10 +288,8 @@ def scrape_statistics():
     batch_limit = 100
     for manga in MDManga.select():
         print(f"[statistics/manga] {manga.slug}")
-        title = requests.get(
-            f"{BASE_URL}/statistics/manga/{manga.slug}",
-            headers=HEADERS,
-        ).json()["statistics"][manga.slug]
+        manga_url = f"{BASE_URL}/statistics/manga/{manga.slug}"
+        title = request_with_retry(manga_url).json()["statistics"][manga.slug]
 
         chapter_uuids = []
         for chapter in manga.chapters:
