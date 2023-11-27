@@ -15,6 +15,7 @@ class IndexThumbnail(BaseModel):
     data = BlobField()
 
 
+# Series may include only 1 book.
 class IndexSeries(BaseModel):
     id = IntegerField(primary_key=True)
     title = CharField()

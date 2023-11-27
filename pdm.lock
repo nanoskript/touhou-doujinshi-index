@@ -6,7 +6,7 @@ groups = ["default"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:aef1eee9d32f3b06c1b7aad12f9870c21ce0f0f3e993708386c5d2fde44cbffd"
+content_hash = "sha256:d43551086e1907690be3599fbfa81c4d6318d851178da8cb9814cd886010ec90"
 
 [[package]]
 name = "beautifulsoup4"

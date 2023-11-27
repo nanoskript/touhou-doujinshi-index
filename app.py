@@ -7,6 +7,7 @@ from typing import Optional
 
 import peewee
 import timeago
+from dateutil.relativedelta import relativedelta
 from flask import Flask, render_template, send_file, request, url_for, make_response
 from peewee import fn
 
@@ -70,11 +71,23 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
         IndexEntry.title.desc(),
     )
 
+    # Count number of books in a series.
+    relevant_series = IndexBook.select(IndexBook.series).where(IndexBook.id << book_ids)
+    series_book_counts: dict[str, int] = dict((IndexSeries.select(IndexSeries.id, fn.count())
+                                               .join(IndexBook).where(IndexSeries.id << relevant_series)
+                                               .group_by(IndexSeries).tuples()))
+
     books = {}
     for book in peewee.prefetch(models, tags, characters, descriptions, entries):
+        # Only include series if there are separate books.
+        series = book.series
+        if series and series_book_counts[series.id] <= 1:
+            series = None
+
+        # Construct model.
         books[book.id] = BookData(
             title=book.title,
-            series=(book.series and book.series.title),
+            series=(series and series.title),
             thumbnail_id=book.thumbnail_id,
             tags=[row.tag.name for row in book.indexbooktag_set],
             characters=[row.character.name for row in book.indexbookcharacter_set],
@@ -241,6 +254,76 @@ def route_index():
     )
 
 
+@app.route("/popular")
+def route_popular():
+    @dataclasses.dataclass()
+    class TimeRange:
+        name: str
+        description: str
+        start_date: datetime.datetime
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    time_ranges = [
+        ("forever", TimeRange(name="All time", description="of all time",
+                              start_date=datetime.datetime.fromtimestamp(0))),
+        ("past-year", TimeRange(name="Past year", description="uploaded in the past year",
+                                start_date=now - relativedelta(years=1))),
+        ("past-month", TimeRange(name="Past month", description="uploaded in the past month",
+                                 start_date=now - relativedelta(months=1))),
+    ]
+
+    time_range = dict(time_ranges)[request.args.get("range", "forever")]
+    exclude_sources = [key for key in ALL_SOURCE_TYPES.keys() if key not in {"ds", "md"}]
+    f = EntriesFilter(language="English", exclude_sources=exclude_sources)
+
+    # Query total comments for each book.
+    book_comments = fn.SUM(IndexEntry.comments).alias("book_comments")
+    latest_release_date = fn.MAX(IndexEntry.date).alias("latest_release_date")
+    books = (IndexBook.select(book_comments, IndexBook, latest_release_date)
+             .join(IndexEntry).group_by(IndexBook)
+             .order_by(fn.MAX(IndexEntry.date).desc()))
+    books = filter_entries(books, f)
+
+    # Query total comments in book or series.
+    # FIXME: Uses `thumbnail_id` as a unique identifier.
+    total_comments = fn.SUM(books.c.book_comments) + fn.COALESCE(IndexSeries.comments, 0)
+    combined = (IndexBook.select(total_comments.alias("comments"), books.c.id, books.c.latest_release_date)
+                .from_(books).join(IndexSeries, peewee.JOIN.LEFT_OUTER, on=(IndexSeries.id == books.c.series_id))
+                .group_by(fn.COALESCE(IndexSeries.id, books.c.thumbnail_id)))
+
+    # Order results by the most number of comments first.
+    query = (IndexBook.select(combined.c.comments, combined.c.id).from_(combined)
+             .where(combined.c.latest_release_date > time_range.start_date)
+             .order_by(combined.c.comments.desc()))
+
+    # Perform count and selection in single query.
+    limit = 20
+    page = int(request.args.get("page", 1))
+    total_column = fn.Count("*").over().alias("total")
+    query = (IndexBook.select(total_column, peewee.SQL("*"))
+             .from_(query).paginate(page, limit))
+
+    total_books, comments, book_ids = 0, [], []
+    for result in query:
+        total_books = result.total
+        comments.append(result.comments)
+        book_ids.append(result.id)
+
+    total_pages = math.ceil(total_books / limit)
+    book_data = build_books(book_ids, f)
+    books = [book_data[book] for book in book_ids]
+
+    return render_template(
+        "popular.html",
+        books=list(zip(comments, books)),
+        total_books=total_books,
+        total_pages=total_pages,
+        page=page,
+        time_range=time_range,
+        time_ranges=time_ranges,
+    )
+
+
 @app.route("/book/<key>")
 def route_book(key: str):
     def build_description(b: BookData) -> str:
@@ -304,6 +387,7 @@ def route_sitemap_index():
 def route_sitemap_static():
     return as_xml(render_template("sitemap.xml", paths=[
         url_for("route_index"),
+        url_for("route_popular"),
         url_for("route_recipes"),
         url_for("route_about"),
     ]))

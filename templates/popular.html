@@ -1,0 +1,57 @@
+{% extends "_base.html" %}
+{% from "_book.html" import render_book %}
+{% from "_pagination.html" import render_pagination %}
+
+{% block title %}
+    Page {{ page }} - Popular
+{% endblock %}
+
+{% block description %}
+    Read and search for popular English releases of Touhou doujinshi and manga
+    on Dynasty Scans and MangaDex.
+{% endblock %}
+
+{% block head %}
+    <meta property="og:description" content="{{ pluralize(total_books, "result") }}."/>
+    {% if books %}
+        {% set _series_comments, book = books[0] %}
+        <meta property="og:image" content="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"/>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="alert alert-primary" style="text-align: center; margin-bottom: 1rem;">
+        Showing the most commented English releases on Dynasty Scans and MangaDex
+        <b>{{ time_range.description }}</b>.
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; margin-bottom: 2rem;">
+        <div>
+            {% for slug, model in time_ranges %}
+                {% if time_range == model %}
+                    <b>{{ model.name }}</b>
+                {% else %}
+                    <a href="{{ url_for('route_popular', range=slug) }}"><b>{{ model.name }}</b></a>
+                {% endif %}
+                {{ " • " if not loop.last }}
+            {% endfor %}
+        </div>
+        <div>
+            <b>{{ total_books }} results</b>.
+        </div>
+    </div>
+    <div class="books-column">
+        {% for series_comments, book in books %}
+            {% macro footer() %}
+                {% if book.series %}
+                    <div class="alert alert-secondary">
+                        This work is part of a series with
+                        <b>{{ pluralize(series_comments, "comment") }}</b>.
+                        Only the latest release is shown.
+                    </div>
+                {% endif %}
+            {% endmacro %}
+            {{ render_book(book, footer=footer) }}
+        {% endfor %}
+    </div>
+    {{ render_pagination('route_popular', page, total_pages) }}
+{% endblock %}

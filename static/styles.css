@@ -41,6 +41,7 @@ body {
 
 .book-container-title h4 {
     font-size: large;
+    line-height: 1.2;
     margin-top: 0.5rem;
     margin-bottom: 0;
 }
@@ -83,6 +84,12 @@ body {
 
 .book-container-main .entry-box .entry-box-attributes > * {
     white-space: nowrap;
+}
+
+.books-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
 }
 
 .pagination {
@@ -162,4 +169,22 @@ body {
 
 .recipe-explanation li {
     margin: 0;
+}
+
+.alert {
+    padding: 1rem 2rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+}
+
+.alert.alert-primary {
+    color: #004085;
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.alert.alert-secondary {
+    color: #383d41;
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
 }

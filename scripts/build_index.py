@@ -133,11 +133,7 @@ def coalesce_book_series(lists: list[EntryList]) -> list[tuple[EntrySeries, list
             series, book_ids = roots[roots_by_key[series.key]]
             book_ids.append(book_id)
             break
-
-    # Only accept series with more than two books.
-    return [(series, book_ids)
-            for series, book_ids in roots.values()
-            if len(book_ids) > 1]
+    return list(roots.values())
 
 
 def main():

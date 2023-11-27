@@ -9,13 +9,13 @@
                    min="{{ 1 }}" max="{{ total }}" required
                    class="pagination-input" style="flex-basis: 6rem;"/>
         {% else %}
-            <a href="{{ url_with('route_index', page=number) }}" class="pagination-link">
+            <a href="{{ url_with(route, page=number) }}" class="pagination-link">
                 {{ number }}
             </a>
         {% endif %}
     {% endmacro %}
 
-    <form action="/" method="get">
+    <form action="{{ url_for(route) }}" method="get">
         {% for key, value in request.args.items(multi=True) %}
             {% if key != "page" %}
                 <input type="hidden" name="{{ key }}" value="{{ value }}"/>
@@ -24,7 +24,7 @@
 
         <nav class="pagination">
             {% if 1 < page %}
-                <a class="pagination-link" href="{{ url_with('route_index', page=page - 1) }}">←</a>
+                <a class="pagination-link" href="{{ url_with(route, page=page - 1) }}">←</a>
             {% else %}
                 <span class="pagination-link">←</span>
             {% endif %}
@@ -44,7 +44,7 @@
                 {{ page_number(total) }}
             {% endif %}
             {% if page < total %}
-                <a class="pagination-link" href="{{ url_with('route_index', page=page + 1) }}">→</a>
+                <a class="pagination-link" href="{{ url_with(route, page=page + 1) }}">→</a>
             {% else %}
                 <span class="pagination-link">→</span>
             {% endif %}

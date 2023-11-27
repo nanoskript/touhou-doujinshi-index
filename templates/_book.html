@@ -1,4 +1,4 @@
-{% macro render_book(book) %}
+{% macro render_book(book, footer=None) %}
     <section class="book-container">
         <figure class="book-container-thumbnail">
             <div class="book-container-thumbnail-box">
@@ -87,6 +87,9 @@
                     </div>
                 {% endfor %}
             </div>
+            {% if footer %}
+                {{ footer() }}
+            {% endif %}
         </div>
     </section>
 {% endmacro %}
