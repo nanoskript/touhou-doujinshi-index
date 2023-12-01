@@ -239,7 +239,7 @@ def main():
                 book=book,
                 title=entry_title(entry),
                 url=entry_url(entry),
-                date=entry_date(entry),
+                date=entry_date_sanitized(entry),
                 language=entry_language(entry),
                 page_count=entry_page_count(entry),
                 comments=entry_comments(entry),

@@ -142,6 +142,13 @@ def entry_date(entry: Entry) -> Optional[datetime]:
         return entry.release_date
 
 
+def entry_date_sanitized(entry: Entry) -> Optional[datetime]:
+    date = entry_date(entry)
+    if date and date.year >= 2000:
+        # Assume any year before 2000 is a mistake.
+        return date
+
+
 def entry_url(entry: Entry) -> Optional[str]:
     if isinstance(entry, DBEntry):
         return f"https://danbooru.donmai.us/pools/{entry.pool_id}"
