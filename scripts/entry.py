@@ -224,6 +224,8 @@ def entry_characters(entry: Entry) -> list[str]:
         return ds_entry_characters(entry)
     if isinstance(entry, OrgEntry):
         return entry.characters
+    if isinstance(entry, ToraDataEntry):
+        return entry.characters
     return []
 
 

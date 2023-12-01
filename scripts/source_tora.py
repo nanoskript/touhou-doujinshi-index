@@ -30,6 +30,7 @@ class ToraDataEntry:
     pages: int
     release_date: datetime
     comments: str
+    characters: list[str]
     thumbnail: bytes
 
 
@@ -41,23 +42,24 @@ def tora_entries() -> list[ToraDataEntry]:
         title = strain_html(entry.data, "h1", '<h1 class="product-detail-desc-title">')
         title = etree.tostring(etree.HTML(title), method="text", encoding="unicode").strip()
 
-        table = {}
+        table_text, table_nodes = {}, {}
         details = strain_html(entry.data, "div", '<div class="product-detail-spec">')
         for row in select_table_rows(etree.HTML(details)):
             header, value = row.getchildren()
             header = etree.tostring(header, method="text", encoding="unicode").strip()
-            value = etree.tostring(value, method="text", encoding="unicode").strip()
-            table[header] = value
+            text = etree.tostring(value, method="text", encoding="unicode").strip()
+            table_nodes[header] = value
+            table_text[header] = text
 
         release_date = None
         release_date_key = "発行日"
-        if release_date_key in table:
-            release_date = datetime.strptime(table[release_date_key], "%Y/%m/%d")
+        if release_date_key in table_text:
+            release_date = datetime.strptime(table_text[release_date_key], "%Y/%m/%d")
 
         pages = None
         pages_key = "種別/サイズ"
-        if pages_key in table:
-            tokens = table[pages_key].split()
+        if pages_key in table_text:
+            tokens = table_text[pages_key].split()
             if tokens[-1].endswith("p"):
                 pages = int(tokens[-1][:-1])
 
@@ -68,12 +70,20 @@ def tora_entries() -> list[ToraDataEntry]:
             content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
             comments.append(f"<b>{heading.text}</b>\n{content}")
 
+        characters = []
+        characters_key = "メインキャラ"
+        if characters_key in table_nodes:
+            for link in table_nodes[characters_key].findall("a"):
+                text = etree.tostring(link, method="text", encoding="unicode").strip()
+                characters.append(text)
+
         entries.append(ToraDataEntry(
             id=entry.id,
             title=title,
             pages=pages,
             release_date=release_date,
             comments=("".join(comments)),
+            characters=characters,
             thumbnail=entry.thumbnail,
         ))
     return entries

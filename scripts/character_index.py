@@ -31,7 +31,10 @@ class CharacterIndex:
             if wiki_page:
                 other_names = wiki_page.data["other_names"]
                 for alias in other_names:
-                    self.mapping[alias] = readable_name
+                    if alias not in self.mapping:
+                        self.mapping[alias] = readable_name
+                    if alias.replace("・", "") not in self.mapping:
+                        self.mapping[alias.replace("・", "")] = readable_name
 
     def find_and_canonicalize(self, name: str) -> Optional[str]:
         if name in self.unique:
