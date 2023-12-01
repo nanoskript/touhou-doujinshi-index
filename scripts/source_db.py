@@ -1,3 +1,5 @@
+from collections import Counter
+
 import requests
 from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
@@ -24,8 +26,8 @@ class DBArtist(BaseModel):
     data = JSONField()
 
 
-class DBCharacter(BaseModel):
-    string = CharField(unique=True)
+class DBWikiPage(BaseModel):
+    title = CharField(primary_key=True)
     data = JSONField()
 
 
@@ -217,6 +219,43 @@ def scrape_comments():
         )
 
 
+def significant_characters() -> Counter[str]:
+    characters = Counter()
+    for entry in DBEntry.select(DBEntry.posts):
+        names = []
+        for post in entry.posts:
+            names += post["tag_string_character"].split()
+        for name in set(names):
+            characters[name] += 1
+
+    # Take only significant characters.
+    return Counter({
+        name: count
+        for name, count in characters.items()
+        if count >= 20
+    })
+
+
+def scrape_wiki_pages():
+    for character in significant_characters().keys():
+        if DBWikiPage.get_or_none(character):
+            print(f"[wiki/skip] {character}")
+            continue
+
+        print(f"[wiki] {character}")
+        results = requests.get(
+            "https://danbooru.donmai.us/wiki_pages.json",
+            params={"search[title_normalize]": character},
+            headers=HEADERS,
+        ).json()
+
+        if results:
+            DBWikiPage.create(
+                title=character,
+                data=results[0],
+            )
+
+
 def render_pool_descriptions():
     batch_size = 1000
     entries = list(DBEntry.select())
@@ -248,12 +287,14 @@ def main():
         DBEntry,
         DBArtist,
         DBComments,
+        DBWikiPage,
         DBPoolDescription,
     ])
 
     scrape_pools()
     scrape_artists()
     scrape_comments()
+    scrape_wiki_pages()
     render_pool_descriptions()
 
 

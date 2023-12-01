@@ -1,6 +1,11 @@
-from collections import Counter
+from scripts.source_db import significant_characters
 
-from scripts.source_db import DBEntry
+
+def tag_to_name(tag: str):
+    return (tag.replace("_", " ").title()
+            .replace("Pc-98", "PC-98")
+            .replace("(Touhou)", "")
+            .strip())
 
 
 class CharacterIndex:
@@ -8,26 +13,8 @@ class CharacterIndex:
     mapping: dict[str, str]
 
     def __init__(self):
-        def tag_to_name(tag: str):
-            return (tag.replace("_", " ").title()
-                    .replace("Pc-98", "PC-98")
-                    .replace("(Touhou)", "")
-                    .strip())
-
-        characters = Counter()
-        for entry in DBEntry.select(DBEntry.posts):
-            names = []
-            for post in entry.posts:
-                names += post["tag_string_character"].split()
-            for name in set(names):
-                characters[name] += 1
-
-        # Take only significant characters.
-        self.unique = set([
-            tag_to_name(name)
-            for name, count in characters.items()
-            if count >= 20
-        ])
+        characters = significant_characters()
+        self.unique = set(map(tag_to_name, characters.keys()))
 
         # Tokenize by most common first.
         self.mapping = {}
@@ -38,6 +25,7 @@ class CharacterIndex:
                     self.mapping[token] = readable_name
 
     def canonicalize(self, name: str) -> str:
+        name = tag_to_name(name)
         if name in self.unique:
             return name
 
