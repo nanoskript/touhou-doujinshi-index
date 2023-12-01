@@ -3,7 +3,7 @@ from typing import Optional
 import PIL
 import requests
 from bs4 import BeautifulSoup
-from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField
+from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 from requests.adapters import Retry, HTTPAdapter
 
@@ -31,6 +31,11 @@ class DSTopic(BaseModel):
     subject = CharField()
     views = IntegerField()
     comments = IntegerField()
+
+
+class DSEntryTopicSlug(BaseModel):
+    entry = ForeignKeyField(DSEntry, unique=True)
+    topic_slug = CharField()
 
 
 def filter_ds_entries():
@@ -68,30 +73,14 @@ def ds_entry_series(entry: DSEntry) -> Optional[dict]:
             return tag
 
 
-def topic_comments_by_name(name: str) -> Optional[int]:
-    topics = list(DSTopic.select()
-                  .where(DSTopic.subject == f"{name} discussion")
-                  .order_by(DSTopic.comments))
-
-    if topics:
-        # FIXME: If there are multiple topics,
-        # we currently take the most conservative non-empty one.
-        return topics[0].comments
-
-
+# FIXME: Include anthology comments.
+# If this entry is part of a series,
+# then this returns all the comments for that series.
 def ds_entry_comments(entry: DSEntry) -> Optional[int]:
-    # Comments on a series are combined.
-    series_tag = ds_entry_series(entry)
-    if series_tag:
-        return None
-
-    # Retrieve topic.
-    title = entry.data["title"]
-    return topic_comments_by_name(title)
-
-
-def ds_series_comments(name: str) -> int:
-    return topic_comments_by_name(name) or 0
+    link = DSEntryTopicSlug.get_or_none(entry=entry)
+    if link:
+        topic = DSTopic.get(slug=link.topic_slug)
+        return topic.comments
 
 
 def scrape_entries():
@@ -165,12 +154,43 @@ def scrape_topics():
         page += 1
 
 
+def scrape_entry_topic_slugs():
+    for entry in DSEntry.select():
+        if DSEntryTopicSlug.get_or_none(entry=entry):
+            print(f"[topic/slug/skip] {entry.slug}")
+            continue
+
+        print(f"[topic/slug] {entry.slug}")
+        url = f"https://dynasty-scans.com/chapters/{entry.slug}"
+        response = s.get(url, headers=HEADERS).content
+
+        html = BeautifulSoup(response, features="html.parser")
+        icon = html.find("i", attrs={"class": "icon-comment"})
+        if icon.nextSibling is not None:
+            link = icon.parent.attrs["href"]
+            topic_slug = link.split("/")[-1].strip()
+
+            (DSEntryTopicSlug.delete()
+             .where(DSEntryTopicSlug.entry == entry)
+             .execute())
+
+            DSEntryTopicSlug.create(
+                entry=entry,
+                topic_slug=topic_slug,
+            )
+
+
 def main():
     db.connect()
-    db.create_tables([DSEntry, DSTopic])
+    db.create_tables([
+        DSEntry,
+        DSTopic,
+        DSEntryTopicSlug,
+    ])
 
     scrape_entries()
     scrape_topics()
+    scrape_entry_topic_slugs()
 
 
 if __name__ == '__main__':
