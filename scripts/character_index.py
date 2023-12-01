@@ -1,4 +1,6 @@
-from scripts.source_db import significant_characters
+from typing import Optional
+
+from scripts.source_db import significant_characters, DBWikiPage
 
 
 def tag_to_name(tag: str):
@@ -24,8 +26,14 @@ class CharacterIndex:
                 if token not in self.mapping:
                     self.mapping[token] = readable_name
 
-    def canonicalize(self, name: str) -> str:
-        name = tag_to_name(name)
+            # Add character aliases.
+            wiki_page = DBWikiPage.get_or_none(title=name)
+            if wiki_page:
+                other_names = wiki_page.data["other_names"]
+                for alias in other_names:
+                    self.mapping[alias] = readable_name
+
+    def find_and_canonicalize(self, name: str) -> Optional[str]:
         if name in self.unique:
             return name
 
@@ -37,4 +45,6 @@ class CharacterIndex:
             if token.title() in self.mapping:
                 return self.mapping[token.title()]
 
-        return name
+    def canonicalize(self, name: str) -> str:
+        name = tag_to_name(name)
+        return self.find_and_canonicalize(name) or name

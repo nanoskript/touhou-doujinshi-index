@@ -201,6 +201,7 @@ def entry_page_count(entry: Entry) -> Optional[int]:
         return entry.pages
 
 
+# List of strings that are guaranteed to be characters.
 def entry_characters(entry: Entry) -> list[str]:
     if isinstance(entry, DBEntry):
         appearances = defaultdict(int)
@@ -223,6 +224,13 @@ def entry_characters(entry: Entry) -> list[str]:
     if isinstance(entry, DSEntry):
         return ds_entry_characters(entry)
     if isinstance(entry, OrgEntry):
+        return entry.characters
+    return []
+
+
+# List of strings that may contain characters.
+def entry_characters_plausible(entry: Entry) -> list[str]:
+    if isinstance(entry, MBDataEntry):
         return entry.characters
     return []
 

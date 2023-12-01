@@ -49,6 +49,7 @@ class MBDataEntry:
     pages: int
     release_date: datetime
     comments: str
+    characters: list[str]
     thumbnail: bytes
 
 
@@ -56,6 +57,7 @@ def mb_entries() -> list[MBDataEntry]:
     entries = []
     select_comments = CSSSelector(".item-detail.mt24")
     select_table_headers = CSSSelector("th")
+    select_links = CSSSelector("a")
     for entry in MBEntry.select():
         page = strain_html(entry.data, "div", '<div class="item-page">')
         tree = etree.HTML(page)
@@ -82,12 +84,19 @@ def mb_entries() -> list[MBDataEntry]:
             content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
             comments.append(f"<b>{heading.text}</b>\n{content}")
 
+        characters = []
+        for link in select_links(tree):
+            prefix = "https://www.melonbooks.co.jp/tags/index.php?chara="
+            if link.attrib["href"].startswith(prefix):
+                characters.append(link.text.strip().removeprefix("#"))
+
         entries.append(MBDataEntry(
             id=entry.id,
             title=tree.find(".//h1").text,
             pages=pages,
             release_date=release_date,
             comments=("<br/>".join(comments)),
+            characters=characters,
             thumbnail=entry.thumbnail,
         ))
     return entries

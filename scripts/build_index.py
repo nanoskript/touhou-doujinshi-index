@@ -51,10 +51,14 @@ def form_gallery_groups() -> EntryListImageTree:
 
 
 def entry_list_characters(index: CharacterIndex, entry_list: EntryList) -> list[str]:
-    characters = []
+    characters, plausible = [], []
     for entry in entry_list.entries:
         characters += entry_characters(entry)
+        plausible += entry_characters_plausible(entry)
+
     characters = [index.canonicalize(name) for name in characters]
+    plausible = [index.find_and_canonicalize(name) for name in plausible]
+    characters += list(filter(None, plausible))
     return list(sorted(set(characters)))
 
 
