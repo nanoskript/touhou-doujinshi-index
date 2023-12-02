@@ -82,7 +82,8 @@ def process_entry(entry: Entry):
     try:
         images = entry_candidate_images(entry)
         h8s = [image_hash(image, size=8) for image in images]
-        return ImageHash(id=entry_key(entry), h8s=" ".join(h8s))
+        h8s = " ".join(list(dict.fromkeys(h8s)))
+        return ImageHash(id=entry_key(entry), h8s=h8s)
     except PIL.UnidentifiedImageError:
         pass
 
