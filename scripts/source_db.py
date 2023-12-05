@@ -238,7 +238,7 @@ def significant_characters() -> Counter[str]:
 
 def scrape_wiki_pages():
     for character in significant_characters().keys():
-        if DBWikiPage.get_or_none(character):
+        if DBWikiPage.get_or_none(title=character):
             print(f"[wiki/skip] {character}")
             continue
 
