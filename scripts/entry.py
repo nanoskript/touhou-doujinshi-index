@@ -251,6 +251,18 @@ def entry_tags(entry: Entry) -> list[str]:
     return []
 
 
+# Tags are only added if they are present as a synonym.
+def entry_tags_plausible(entry: Entry) -> list[str]:
+    if isinstance(entry, EHEntry):
+        tags = []
+        for tag in entry.data["tags"]:
+            if tag.startswith("other:"):
+                tag = tag.removeprefix("other:")
+                tags.append(tag.title())
+        return list(sorted(tags))
+    return []
+
+
 def entry_descriptions(entry: Entry) -> dict[str, str]:
     if isinstance(entry, DBEntry):
         row = DBPoolDescription.get_or_none(DBPoolDescription.pool == entry)

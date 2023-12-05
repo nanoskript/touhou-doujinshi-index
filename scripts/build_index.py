@@ -75,12 +75,16 @@ def entry_list_tags(entry_list: EntryList) -> list[str]:
         "Alien": "Aliens",
         "Ghost": "Ghosts",
         "Vampire": "Vampires",
+        "Artbook": "Artbook",
     }
 
     tags = []
     for entry in entry_list.entries:
         for tag in entry_tags(entry):
             tags.append(synonyms.get(tag, tag))
+        for tag in entry_tags_plausible(entry):
+            if tag in synonyms:
+                tags.append(synonyms[tag])
     return list(sorted(set(tags)))
 
 
