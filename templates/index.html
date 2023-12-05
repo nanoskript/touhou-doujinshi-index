@@ -142,6 +142,24 @@
                         This includes every result with an entry on doujinshi.org.
                     </small>
                 </div>
+                <div>
+                    <div style="display: flex; flex-direction: row; gap: 1.5rem;">
+                        <div style="flex: 1;">
+                            <label>Minimum page count:</label>
+                            <input name="min_pages" value="{{ request.args.min_pages }}"
+                                   type="number" class="form-control"/>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Maximum page count:</label>
+                            <input name="max_pages" value="{{ request.args.max_pages }}"
+                                   type="number" class="form-control"/>
+                        </div>
+                    </div>
+                    <small class="form-control-help">
+                        For example, a minimum page count of <code>10</code> will only show entries
+                        with 10 pages or more.
+                    </small>
+                </div>
             </div>
         </details>
     </form>

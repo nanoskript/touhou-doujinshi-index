@@ -245,7 +245,7 @@ def main():
                 url=entry_url(entry),
                 date=entry_date_sanitized(entry),
                 language=entry_language(entry),
-                page_count=entry_page_count(entry),
+                page_count=entry_page_count_sanitized(entry),
                 comments=entry_comments(entry),
             )
             for item, book in zip(tqdm(lists), books)

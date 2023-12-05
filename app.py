@@ -34,12 +34,18 @@ class BookData:
 @dataclasses.dataclass()
 class EntriesFilter:
     language: str | None = None
+    min_pages: int | None = None
+    max_pages: int | None = None
     exclude_sources: list[str] = dataclasses.field(default_factory=list)
 
 
 def filter_entries(query, f: EntriesFilter):
     if f.language:
         query = query.where(IndexEntry.language == f.language)
+    if f.min_pages:
+        query = query.where(IndexEntry.page_count >= f.min_pages)
+    if f.max_pages:
+        query = query.where(IndexEntry.page_count <= f.max_pages)
     for source in f.exclude_sources:
         query = query.where(~(IndexEntry.id.startswith(source)))
     return query
@@ -206,6 +212,8 @@ def build_language_groups() -> list[tuple[str, list[str]]]:
 def route_index():
     f = EntriesFilter(
         language=request.args.get("language", None),
+        min_pages=request.args.get("min_pages", None),
+        max_pages=request.args.get("max_pages", None),
         exclude_sources=request.args.getlist("exclude_source"),
     )
 

@@ -207,6 +207,10 @@ def entry_page_count(entry: Entry) -> Optional[int]:
         return entry.pages
 
 
+def entry_page_count_sanitized(entry: Entry) -> Optional[int]:
+    return entry_page_count(entry) or None
+
+
 # List of strings that are guaranteed to be characters.
 def entry_characters(entry: Entry) -> list[str]:
     if isinstance(entry, DBEntry):
