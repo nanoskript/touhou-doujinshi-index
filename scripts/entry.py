@@ -6,11 +6,12 @@ from typing import Union, Optional
 
 from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
-from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments
-from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments
-from .source_eh import EHEntry
+from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists
+from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments, ds_entry_authors
+from .source_eh import EHEntry, gallery_artists, gallery_circles
 from .source_mb import MBDataEntry
-from .source_md import MDEntry, md_manga_tags, md_manga_descriptions, md_manga_comments, md_manga_titles
+from .source_md import MDEntry, md_manga_tags, md_manga_descriptions, md_manga_comments, md_manga_titles, \
+    md_manga_authors_and_artists
 from .source_tora import ToraDataEntry
 
 Entry = Union[
@@ -267,6 +268,29 @@ def entry_tags_plausible(entry: Entry) -> list[str]:
                 tags.append(tag.title())
         return list(sorted(tags))
     return []
+
+
+def entry_artists(entry: Entry) -> list[str]:
+    if isinstance(entry, DBEntry):
+        return db_entry_artists(entry)
+    if isinstance(entry, EHEntry):
+        return gallery_artists(entry) + gallery_circles(entry)
+    if isinstance(entry, DSEntry):
+        return ds_entry_authors(entry)
+    if isinstance(entry, MDEntry):
+        return md_manga_authors_and_artists(entry.manga)
+    if isinstance(entry, OrgEntry):
+        # TODO: Add artists for doujinshi.org entries.
+        return []
+    if isinstance(entry, CTHEntry):
+        # TODO: Add artists for CTH entries.
+        return []
+    if isinstance(entry, MBDataEntry):
+        # TODO: Add artists for Melonbooks entries.
+        return []
+    if isinstance(entry, ToraDataEntry):
+        # TODO: Add artists for Toranoana entries.
+        return []
 
 
 def entry_descriptions(entry: Entry) -> dict[str, str]:

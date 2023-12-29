@@ -86,6 +86,14 @@ def md_manga_titles(manga: MDManga) -> list[str]:
     return manga_titles
 
 
+def md_manga_authors_and_artists(manga: MDManga) -> list[str]:
+    names = []
+    for relationship in manga.data["relationships"]:
+        if relationship["type"] in ["author", "artist"]:
+            names.append(relationship["attributes"]["name"])
+    return list(set(names))
+
+
 def md_manga_tags(manga: MDManga) -> list[str]:
     tags = []
     for tag in manga.data["attributes"]["tags"]:

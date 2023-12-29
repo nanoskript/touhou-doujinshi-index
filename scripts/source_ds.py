@@ -67,6 +67,14 @@ def ds_entry_tags(entry: DSEntry) -> list[str]:
     return tags
 
 
+def ds_entry_authors(entry: DSEntry) -> list[str]:
+    artists = []
+    for tag in entry.data["tags"]:
+        if tag["type"] in ["Author"]:
+            artists.append(tag["name"])
+    return artists
+
+
 def ds_entry_series(entry: DSEntry) -> Optional[dict]:
     for tag in entry.data["tags"]:
         if tag["type"] == "Series":

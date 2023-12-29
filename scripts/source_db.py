@@ -68,6 +68,14 @@ def pool_translation_ratio(entry: DBEntry) -> float:
     return translation_count / len(entry.posts)
 
 
+def db_entry_artists(entry: DBEntry) -> list[str]:
+    artists = []
+    for post in entry.posts:
+        artists += post["tag_string_artist"].split()
+    artists = [artist.replace("_", " ") for artist in artists]
+    return list(set(artists))
+
+
 # TODO: Include 東方 as query.
 def all_pools():
     page = 1

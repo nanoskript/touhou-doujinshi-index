@@ -35,6 +35,15 @@ class IndexBookTitle(BaseModel):
     title = CharField()
 
 
+class IndexArtist(BaseModel):
+    name = CharField(primary_key=True)
+
+
+class IndexBookArtist(BaseModel):
+    book = ForeignKeyField(IndexBook)
+    artist = ForeignKeyField(IndexArtist)
+
+
 class IndexTag(BaseModel):
     name = CharField(primary_key=True)
 

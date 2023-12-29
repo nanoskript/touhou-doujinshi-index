@@ -46,9 +46,23 @@
                 {% if (book.all_titles | length) > 1 %}
                     <details class="description-box">
                         <summary>Book titles</summary>
-                        <ul style="margin: 0.5rem 0 1rem;">
+                        <ul style="margin: 0.5rem 0;">
                             {% for title in book.all_titles %}
                                 <li>{{ title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                {% endif %}
+                {% if book.artists %}
+                    <details class="description-box">
+                        <summary>Book artists</summary>
+                        <ul style="margin: 0.5rem 0;">
+                            {% for artist in book.artists %}
+                                <li>
+                                    <a href="{{ url_for('route_index', q=("artist:" + artist | encode_query_term)) }}">
+                                        {{ artist }}
+                                    </a>
+                                </li>
                             {% endfor %}
                         </ul>
                     </details>

@@ -27,6 +27,7 @@ class BookData:
     all_titles: list[str]
     series: Optional[str]
     thumbnail_id: str
+    artists: list[str]
     tags: list[str]
     characters: list[str]
     descriptions: list[IndexBookDescription]
@@ -61,6 +62,11 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
     titles = (IndexBookTitle.select()
               .order_by(IndexBookTitle.title))
 
+    artists = (IndexBookArtist
+               .select(IndexBookArtist, IndexArtist)
+               .join(IndexArtist)
+               .order_by(IndexArtist.name))
+
     tags = (IndexBookTag
             .select(IndexBookTag, IndexTag)
             .join(IndexTag)
@@ -89,7 +95,7 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
                                                .group_by(IndexSeries).tuples()))
 
     books = {}
-    for book in peewee.prefetch(models, titles, tags, characters, descriptions, entries):
+    for book in peewee.prefetch(models, titles, artists, descriptions, tags, characters, entries):
         # Only include series if there are separate books.
         series = book.series
         if series and series_book_counts[series.id] <= 1:
@@ -101,6 +107,7 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
             all_titles=[row.title for row in book.indexbooktitle_set],
             series=(series and series.title),
             thumbnail_id=book.thumbnail_id,
+            artists=[row.artist.name for row in book.indexbookartist_set],
             tags=[row.tag.name for row in book.indexbooktag_set],
             characters=[row.character.name for row in book.indexbookcharacter_set],
             descriptions=book.indexbookdescription_set,
@@ -139,6 +146,7 @@ def build_full_query(
     title_tokens: list[str],
     must_include_tags: list[str],
     must_include_characters: list[str],
+    must_include_artists: list[str],
     exclude_on_sources: list[str],
     exclude_on_language: str | None,
     include_metadata_only: bool,
@@ -173,6 +181,12 @@ def build_full_query(
                                 .join(IndexBookCharacter)
                                 .where(IndexBookCharacter.character.contains(character)))
         query = query.where(IndexBook.id << books_with_character)
+
+    for artist in must_include_artists:
+        books_with_artist = (IndexBook.select()
+                             .join(IndexBookArtist)
+                             .where(IndexBookArtist.artist.contains(artist)))
+        query = query.where(IndexBook.id << books_with_artist)
 
     for source in exclude_on_sources:
         books_with_source = (IndexBook.select()
@@ -254,6 +268,7 @@ def route_index():
         title_tokens=query.get("title", []),
         must_include_tags=query.get("tag", []),
         must_include_characters=query.get("character", []),
+        must_include_artists=query.get("artist", []),
         exclude_on_sources=request.args.getlist("exclude_on_source"),
         exclude_on_language=request.args.get("exclude_on_language", None),
         include_metadata_only=("include_metadata_only" in request.args),
@@ -315,9 +330,15 @@ def route_autocomplete():
              .where(IndexTag.name.startswith(q))
              .order_by(IndexTag.name).limit(10))]
 
+    artists = [row.name for row in
+               (IndexArtist.select()
+                .where(IndexArtist.name.startswith(q))
+                .order_by(IndexArtist.name).limit(10))]
+
     return [*[("Language", term, f"language:{encode_query_term(term)}") for term in languages],
             *[("Character", term, f"character:{encode_query_term(term)}") for term in characters],
-            *[("Tag", term, f"tag:{encode_query_term(term)}") for term in tags]][:10]
+            *[("Tag", term, f"tag:{encode_query_term(term)}") for term in tags],
+            *[("Artist", term, f"artist:{encode_query_term(term)}") for term in artists]][:10]
 
 
 @app.route("/popular")

@@ -97,6 +97,17 @@ def entry_list_descriptions(entry_list: EntryList):
     return descriptions
 
 
+def entry_list_artists(entry_list: EntryList) -> list[str]:
+    artists = []
+    for entry in entry_list.entries:
+        for artist in entry_artists(entry):
+            # TODO: Canonicalize artist names based on Danbooru database.
+            uppercase = artist.upper()
+            artist = uppercase if uppercase in ["ZUN"] else artist.title()
+            artists.append(artist)
+    return list(set(artists))
+
+
 def entry_list_canonical(entry_list: EntryList) -> Optional[Entry]:
     return entry_list.entries[0]
 
@@ -169,6 +180,8 @@ def main():
         IndexEntry,
         IndexBook,
         IndexBookTitle,
+        IndexArtist,
+        IndexBookArtist,
         IndexCharacter,
         IndexBookCharacter,
         IndexTag,
@@ -251,6 +264,14 @@ def main():
         all_character_models = [IndexCharacter(name=name) for name in all_characters]
         IndexCharacter.bulk_create(all_character_models, batch_size)
         IndexBookCharacter.bulk_create(book_characters, batch_size)
+
+        all_artists, book_artists = set(), []
+        for item, book in zip(tqdm(lists), books):
+            artists = entry_list_artists(item)
+            all_artists.update(set(artists))
+            book_artists.extend((IndexBookArtist(book=book, artist=artist) for artist in artists))
+        IndexArtist.bulk_create([IndexArtist(name=name) for name in all_artists], batch_size)
+        IndexBookArtist.bulk_create(book_artists, batch_size)
 
         all_languages, entries = set(), []
         for item, book in zip(tqdm(lists), books):
