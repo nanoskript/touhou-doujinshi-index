@@ -42,7 +42,7 @@ class EntriesFilter:
 
 def filter_entries(query, f: EntriesFilter):
     if f.language:
-        query = query.where(IndexEntry.language ** f.language)
+        query = query.where(IndexEntry.language_id ** f.language)
     if f.min_pages:
         query = query.where(IndexEntry.page_count >= f.min_pages)
     if f.max_pages:
@@ -73,7 +73,7 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
     query = IndexEntry.select()
     query = filter_entries(query, f)
     entries = query.order_by(
-        IndexEntry.language,
+        IndexEntry.language_id,
         IndexEntry.date.desc(),
         IndexEntry.title.desc(),
     )
@@ -171,13 +171,13 @@ def build_full_query(
                              .where(IndexEntry.id.startswith(source)))
         if f.language:
             books_with_source = (books_with_source
-                                 .where(IndexEntry.language == f.language))
+                                 .where(IndexEntry.language_id == f.language))
         query = query.where(~(IndexBook.id << books_with_source))
 
     if exclude_on_language:
         books_with_language = (IndexBook.select()
                                .join(IndexEntry)
-                               .where(IndexEntry.language == exclude_on_language))
+                               .where(IndexEntry.language_id == exclude_on_language))
         query = query.where(~(IndexBook.id << books_with_language))
 
     if not include_metadata_only:
@@ -192,15 +192,14 @@ def build_full_query(
             .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.title.desc()))
 
 
-# FIXME: Currently performs a full table scan.
 def build_language_groups() -> list[tuple[str, list[str]]]:
     common = ["Japanese", "English", "Chinese", "Spanish"]
     special = ["Speechless", "Text Cleaned"]
 
-    other = [row.language for row in
-             IndexEntry.select(IndexEntry.language)
-             .where(~(IndexEntry.language << (common + special)))
-             .distinct().order_by(IndexEntry.language)]
+    other = [row.name for row in
+             IndexLanguage.select()
+             .where(~(IndexLanguage.name << (common + special)))
+             .order_by(IndexLanguage.name)]
 
     return [
         ("Common", common),
@@ -292,22 +291,20 @@ def route_autocomplete():
     q = request.args.get("q", "")
     q = decode_query_term(q)
 
-    languages = [row.language for row in
-                 (IndexEntry.select(IndexEntry.language)
-                  .where(IndexEntry.language.startswith(q))
-                  .distinct().limit(10))]
+    languages = [row.name for row in
+                 (IndexLanguage.select()
+                  .where(IndexLanguage.name.startswith(q))
+                  .limit(10))]
 
     characters = [row.name for row in
                   (IndexCharacter.select()
                    .where(IndexCharacter.name.contains(q))
-                   .order_by(fn.length(IndexCharacter.name))
-                   .limit(10))]
+                   .order_by(IndexCharacter.name).limit(10))]
 
     tags = [row.name for row in
             (IndexTag.select()
              .where(IndexTag.name.startswith(q))
-             .order_by(fn.length(IndexTag.name))
-             .limit(10))]
+             .order_by(IndexTag.name).limit(10))]
 
     return [*[("Language", term, f"language:{encode_query_term(term)}") for term in languages],
             *[("Character", term, f"character:{encode_query_term(term)}") for term in characters],

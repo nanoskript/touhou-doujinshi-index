@@ -173,6 +173,7 @@ def main():
         IndexBookDescription,
         IndexSeries,
         IndexThumbnail,
+        IndexLanguage,
     ]
 
     db.connect()
@@ -237,20 +238,27 @@ def main():
         IndexCharacter.bulk_create(all_character_models, batch_size)
         IndexBookCharacter.bulk_create(book_characters, batch_size)
 
-        IndexEntry.bulk_create([
-            IndexEntry(
-                id=entry_key(entry),
-                book=book,
-                title=entry_title(entry),
-                url=entry_url(entry),
-                date=entry_date_sanitized(entry),
-                language=entry_language(entry),
-                page_count=entry_page_count_sanitized(entry),
-                comments=entry_comments(entry),
-            )
-            for item, book in zip(tqdm(lists), books)
-            for entry in item.entries
-        ], batch_size)
+        all_languages, entries = set(), []
+        for item, book in zip(tqdm(lists), books):
+            for entry in item.entries:
+                language = entry_language(entry)
+                if language:
+                    all_languages.add(language)
+
+                entries.append(IndexEntry(
+                    id=entry_key(entry),
+                    book=book,
+                    title=entry_title(entry),
+                    url=entry_url(entry),
+                    date=entry_date_sanitized(entry),
+                    language=entry_language(entry),
+                    page_count=entry_page_count_sanitized(entry),
+                    comments=entry_comments(entry),
+                ))
+
+        all_language_models = [IndexLanguage(name=name) for name in all_languages]
+        IndexLanguage.bulk_create(all_language_models)
+        IndexEntry.bulk_create(entries, batch_size)
 
 
 if __name__ == '__main__':

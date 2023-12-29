@@ -53,12 +53,16 @@ class IndexBookDescription(BaseModel):
     details = CharField()
 
 
+class IndexLanguage(BaseModel):
+    name = CharField(primary_key=True)
+
+
 class IndexEntry(BaseModel):
     id = CharField(primary_key=True)
     book = ForeignKeyField(IndexBook)
     title = CharField()
     url = CharField(null=True)
     date = DateTimeUTCField(index=True, null=True)
-    language = CharField(index=True, null=True)
+    language = ForeignKeyField(IndexLanguage, null=True)
     page_count = IntegerField(null=True)
     comments = IntegerField(null=True)
