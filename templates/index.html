@@ -138,9 +138,22 @@
         </details>
     </form>
     <div class="books-column">
-        {% for book in books %}
-            {{ render_book(book) }}
-        {% endfor %}
+        {% if books %}
+            {% for book in books %}
+                {{ render_book(book) }}
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; margin: 6rem 0;">
+                <h2 style="margin-bottom: 1rem;">No results found.</h2>
+                {% if not "include_metadata_only" in request.args %}
+                    <div>
+                        <a href="{{ url_with('route_index', include_metadata_only="on") }}">
+                            Include metadata-only results?
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
     {{ render_pagination('route_index', page, total_pages) }}
 {% endblock %}
