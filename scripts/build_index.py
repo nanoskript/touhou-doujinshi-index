@@ -1,3 +1,5 @@
+import itertools
+
 from tqdm import tqdm
 from scipy.cluster.hierarchy import DisjointSet
 
@@ -166,6 +168,7 @@ def main():
     tables = [
         IndexEntry,
         IndexBook,
+        IndexBookTitle,
         IndexCharacter,
         IndexBookCharacter,
         IndexTag,
@@ -204,13 +207,24 @@ def main():
                 book_series[book] = model
         IndexSeries.bulk_create(series, batch_size)
 
-        books = [IndexBook(
-            id=index,
-            title=entry_book_title(entry_list_canonical(item)),
-            series=book_series.get(index, None),
-            thumbnail=thumbnail,
-        ) for (index, item), thumbnail in zip(enumerate(tqdm(lists)), thumbnails)]
+        books, book_titles = [], []
+        for (index, item), thumbnail in zip(enumerate(tqdm(lists)), thumbnails):
+            main_title = entry_book_titles(entry_list_canonical(item))[0]
+            all_titles = itertools.chain(*[entry_book_titles(entry) for entry in item.entries])
+            all_titles = list(set(all_titles))
+
+            book = IndexBook(
+                id=index,
+                main_title=main_title,
+                series=book_series.get(index, None),
+                thumbnail=thumbnail,
+            )
+
+            books.append(book)
+            book_titles += [IndexBookTitle(book=book, title=title)
+                            for title in all_titles]
         IndexBook.bulk_create(books, batch_size)
+        IndexBookTitle.bulk_create(book_titles, batch_size)
 
         IndexBookDescription.bulk_create([
             IndexBookDescription(book=book, name=name, details=details)

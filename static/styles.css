@@ -2,6 +2,10 @@ body {
     max-width: 60em;
 }
 
+li {
+    margin: 0;
+}
+
 .book-container {
     display: grid;
     column-gap: 1.5rem;
@@ -165,10 +169,6 @@ body {
 .checklist label {
     margin-bottom: 0;
     font-weight: unset;
-}
-
-.recipe-explanation li {
-    margin: 0;
 }
 
 .alert {

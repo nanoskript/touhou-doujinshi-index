@@ -10,7 +10,7 @@ from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBCom
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments
 from .source_eh import EHEntry
 from .source_mb import MBDataEntry
-from .source_md import MDEntry, md_manga_title, md_manga_tags, md_manga_descriptions, md_manga_comments
+from .source_md import MDEntry, md_manga_tags, md_manga_descriptions, md_manga_comments, md_manga_titles
 from .source_tora import ToraDataEntry
 
 Entry = Union[
@@ -77,7 +77,7 @@ def entry_title(entry: Entry) -> str:
     if isinstance(entry, MDEntry):
         return entry.title
     if isinstance(entry, OrgEntry):
-        return entry.title
+        return entry.titles[0]
     if isinstance(entry, CTHEntry):
         return entry.title
     if isinstance(entry, MBDataEntry):
@@ -86,21 +86,23 @@ def entry_title(entry: Entry) -> str:
         return entry.title
 
 
-def entry_book_title(entry: Entry) -> str:
+# Most important title appears first in list.
+def entry_book_titles(entry: Entry) -> list[str]:
     if isinstance(entry, DBEntry):
         s = entry_title(entry)
         s = s.removeprefix("Touhou -")
         s = s.removeprefix("東方 -")
-        return s.strip()
+        return [s.strip()]
     if isinstance(entry, EHEntry):
         brackets = r"(\s|\([^()]+\)|(\[[^\[\]]+])|(\{[^{}]+}))+$"
-        return re.sub(brackets, "", entry_title(entry))
+        titles = list(filter(None, [entry.data["title"], entry.data["title_jpn"]]))
+        return [re.sub(brackets, "", title.replace("_", " ")) for title in titles]
     if isinstance(entry, MDEntry):
-        s = md_manga_title(entry.manga)
-        s = s.removeprefix("Touhou -")
-        s = s.removesuffix("(Doujinshi)")
-        return s.strip()
-    return entry_title(entry)
+        return [(title.removeprefix("Touhou -").removesuffix("(Doujinshi)").strip())
+                for title in md_manga_titles(entry.manga)]
+    if isinstance(entry, OrgEntry):
+        return entry.titles
+    return [entry_title(entry)]
 
 
 # FIXME: Currently, we assume there is at least one thumbnail.
@@ -303,7 +305,7 @@ class EntrySeries:
 def entry_series(entry: Entry) -> Optional[EntrySeries]:
     if isinstance(entry, MDEntry):
         key = f"md-{entry.manga.slug}"
-        title = entry_book_title(entry)
+        title = entry_book_titles(entry)[0]
         comments = md_manga_comments(entry.manga)
         return EntrySeries(key=key, title=title, comments=comments)
     if isinstance(entry, DSEntry):

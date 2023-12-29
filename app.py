@@ -23,7 +23,8 @@ SITEMAP_URL_LIMIT = 5000
 
 @dataclasses.dataclass()
 class BookData:
-    title: str
+    main_title: str
+    all_titles: list[str]
     series: Optional[str]
     thumbnail_id: str
     tags: list[str]
@@ -57,6 +58,9 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
               .where(IndexBook.id << book_ids)
               .order_by(IndexBook.id))
 
+    titles = (IndexBookTitle.select()
+              .order_by(IndexBookTitle.title))
+
     tags = (IndexBookTag
             .select(IndexBookTag, IndexTag)
             .join(IndexTag)
@@ -85,7 +89,7 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
                                                .group_by(IndexSeries).tuples()))
 
     books = {}
-    for book in peewee.prefetch(models, tags, characters, descriptions, entries):
+    for book in peewee.prefetch(models, titles, tags, characters, descriptions, entries):
         # Only include series if there are separate books.
         series = book.series
         if series and series_book_counts[series.id] <= 1:
@@ -93,7 +97,8 @@ def build_books(book_ids: list[int], f: EntriesFilter) -> dict[int, BookData]:
 
         # Construct model.
         books[book.id] = BookData(
-            title=book.title,
+            main_title=book.main_title,
+            all_titles=[row.title for row in book.indexbooktitle_set],
             series=(series and series.title),
             thumbnail_id=book.thumbnail_id,
             tags=[row.tag.name for row in book.indexbooktag_set],
@@ -147,9 +152,13 @@ def build_full_query(
                            .join(IndexSeries)
                            .where(IndexSeries.title.contains(token)))
 
+        books_by_title = (IndexBook.select()
+                          .join(IndexBookTitle)
+                          .where(IndexBookTitle.title.contains(token)))
+
         query = query.where(
-            IndexBook.title.contains(token) |
             IndexEntry.title.contains(token) |
+            (IndexBook.id << books_by_title) |
             (IndexBook.id << books_by_series)
         )
 
@@ -189,7 +198,7 @@ def build_full_query(
     # Sort by earliest entry present in book.
     return (query
             .group_by(IndexEntry.book)
-            .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.title.desc()))
+            .order_by(fn.Min(IndexEntry.date).desc(), IndexBook.main_title.desc()))
 
 
 def build_language_groups() -> list[tuple[str, list[str]]]:

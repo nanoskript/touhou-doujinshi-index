@@ -24,7 +24,7 @@ class BaseModel(Model):
 
 class OrgEntry(BaseModel):
     id = IntegerField(primary_key=True)
-    title = CharField()
+    titles = JSONField()
     release_date = CharField()
     characters = JSONField()
     pages = IntegerField(null=True)
@@ -81,7 +81,7 @@ def extract_entries():
 
         entries.append(OrgEntry(
             id=book.book_id,
-            title=book.name_en or book.name_jp,
+            titles=list(filter(None, [book.name_en, book.name_jp])),
             release_date=book.released,
             characters=characters,
             pages=book.pages or None,

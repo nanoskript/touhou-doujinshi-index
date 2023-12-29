@@ -24,9 +24,15 @@ class IndexSeries(BaseModel):
 
 class IndexBook(BaseModel):
     id = IntegerField(primary_key=True)
-    title = CharField()
+    main_title = CharField()
     series = ForeignKeyField(IndexSeries, null=True)
     thumbnail = ForeignKeyField(IndexThumbnail)
+
+
+# Represents all titles for a book including the canonical title.
+class IndexBookTitle(BaseModel):
+    book = ForeignKeyField(IndexBook)
+    title = CharField()
 
 
 class IndexTag(BaseModel):

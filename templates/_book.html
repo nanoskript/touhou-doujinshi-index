@@ -3,13 +3,13 @@
         <figure class="book-container-thumbnail">
             <div class="book-container-thumbnail-box">
                 <img src="{{ url_for('route_thumbnail', key=book.thumbnail_id) }}"
-                     alt="{{ book.title | safe }}"/>
+                     alt="{{ book.main_title | safe }}"/>
             </div>
         </figure>
         <div class="book-container-title">
             <h3>
                 <a href="/book/{{ book.entries[0].id }}" rel="nofollow">
-                    {{ book.title | safe }}
+                    {{ book.main_title | safe }}
                 </a>
             </h3>
             {% if book.series %}
@@ -42,16 +42,24 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            {% if book.descriptions %}
-                <div style="display: flex; flex-direction: column;">
-                    {% for description in book.descriptions %}
-                        <details class="description-box">
-                            <summary>{{ description.name }}</summary>
-                            {{ description.details | safe }}
-                        </details>
-                    {% endfor %}
-                </div>
-            {% endif %}
+            <div style="display: flex; flex-direction: column;">
+                {% if (book.all_titles | length) > 1 %}
+                    <details class="description-box">
+                        <summary>Book titles</summary>
+                        <ul style="margin: 0.5rem 0 1rem;">
+                            {% for title in book.all_titles %}
+                                <li>{{ title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                {% endif %}
+                {% for description in book.descriptions %}
+                    <details class="description-box">
+                        <summary>{{ description.name }}</summary>
+                        {{ description.details | safe }}
+                    </details>
+                {% endfor %}
+            </div>
             <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
                 {% for entry in book.entries %}
                     <div class="entry-box">
