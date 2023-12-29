@@ -313,32 +313,37 @@ def route_index():
 @app.get("/autocomplete")
 def route_autocomplete():
     q = request.args.get("q", "")
+    category = None
+    if ":" in q:
+        category, q = q.split(":", maxsplit=1)
     q = decode_query_term(q)
 
-    languages = [row.name for row in
-                 (IndexLanguage.select()
-                  .where(IndexLanguage.name.startswith(q))
-                  .limit(10))]
+    suggestions = [
+        ("language", [row.name for row in
+                      (IndexLanguage.select()
+                       .where(IndexLanguage.name.startswith(q))
+                       .order_by(IndexLanguage.name).limit(10))]),
+        ("character", [row.name for row in
+                       (IndexCharacter.select()
+                        .where(IndexCharacter.name.contains(q))
+                        .order_by(IndexCharacter.name).limit(10))]),
+        ("tag", [row.name for row in
+                 (IndexTag.select()
+                  .where(IndexTag.name.startswith(q))
+                  .order_by(IndexTag.name).limit(10))]),
+        ("artist", [row.name for row in
+                    (IndexArtist.select()
+                     .where(IndexArtist.name.startswith(q))
+                     .order_by(IndexArtist.name).limit(10))])
+    ]
 
-    characters = [row.name for row in
-                  (IndexCharacter.select()
-                   .where(IndexCharacter.name.contains(q))
-                   .order_by(IndexCharacter.name).limit(10))]
+    if category:
+        suggestions = [(kind, terms)
+                       for kind, terms in suggestions
+                       if kind == category]
 
-    tags = [row.name for row in
-            (IndexTag.select()
-             .where(IndexTag.name.startswith(q))
-             .order_by(IndexTag.name).limit(10))]
-
-    artists = [row.name for row in
-               (IndexArtist.select()
-                .where(IndexArtist.name.startswith(q))
-                .order_by(IndexArtist.name).limit(10))]
-
-    return [*[("Language", term, f"language:{encode_query_term(term)}") for term in languages],
-            *[("Character", term, f"character:{encode_query_term(term)}") for term in characters],
-            *[("Tag", term, f"tag:{encode_query_term(term)}") for term in tags],
-            *[("Artist", term, f"artist:{encode_query_term(term)}") for term in artists]][:10]
+    return [(kind.title(), term, f"{kind}:{encode_query_term(term)}")
+            for kind, terms in suggestions for term in terms][:10]
 
 
 @app.route("/popular")

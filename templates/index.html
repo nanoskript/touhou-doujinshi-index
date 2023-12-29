@@ -44,7 +44,7 @@
                 <input name="q" class="form-control"
                        placeholder="Search by title, tags, characters, artist, and language"
                        autocomplete="off" autocapitalize="off" spellcheck="false"
-                       oninput="queryAutocomplete(this);"
+                       oninput="queryAutocomplete(this);" tabindex="1"
                        value="{{ request.args.q }}"/>
                 <ul id="autocompletion-list"></ul>
             </div>
