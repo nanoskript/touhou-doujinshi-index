@@ -3,6 +3,7 @@ import datetime
 import io
 import json
 import math
+from collections import defaultdict
 from typing import Optional
 
 import peewee
@@ -41,7 +42,7 @@ class EntriesFilter:
 
 def filter_entries(query, f: EntriesFilter):
     if f.language:
-        query = query.where(IndexEntry.language == f.language)
+        query = query.where(IndexEntry.language ** f.language)
     if f.min_pages:
         query = query.where(IndexEntry.page_count >= f.min_pages)
     if f.max_pages:
@@ -130,7 +131,7 @@ def pluralize(number: int, string: str, plural: str = None) -> str:
 
 
 def build_full_query(
-    title: str | None,
+    title_tokens: list[str],
     must_include_tags: list[str],
     must_include_characters: list[str],
     exclude_on_sources: list[str],
@@ -141,14 +142,14 @@ def build_full_query(
     query = IndexBook.select(IndexBook.id).join(IndexEntry)
     query = filter_entries(query, f)
 
-    if title:
+    for token in title_tokens:
         books_by_series = (IndexBook.select()
                            .join(IndexSeries)
-                           .where(IndexSeries.title.contains(title)))
+                           .where(IndexSeries.title.contains(token)))
 
         query = query.where(
-            IndexBook.title.contains(title) |
-            IndexEntry.title.contains(title) |
+            IndexBook.title.contains(token) |
+            IndexEntry.title.contains(token) |
             (IndexBook.id << books_by_series)
         )
 
@@ -208,19 +209,43 @@ def build_language_groups() -> list[tuple[str, list[str]]]:
     ]
 
 
+@app.template_filter("encode_query_term")
+def encode_query_term(term: str) -> str:
+    return term.lower().replace(" ", "_")
+
+
+def decode_query_term(query: str) -> str:
+    return query.replace("_", " ")
+
+
+def decode_query(query: str) -> dict[str, list[str]]:
+    decoded = defaultdict(list)
+    for token in query.lower().split():
+        if ":" in token:
+            [key, value] = token.split(":", maxsplit=1)
+            decoded[key].append(decode_query_term(value))
+        else:
+            decoded["title"].append(token)
+    return decoded
+
+
 @app.route("/")
 def route_index():
+    # Only filter by first language term.
+    query = decode_query(request.args.get("q", ""))
+    language = query["language"][0] if "language" in query else None
+
     f = EntriesFilter(
-        language=request.args.get("language", None),
+        language=language,
         min_pages=request.args.get("min_pages", None),
         max_pages=request.args.get("max_pages", None),
         exclude_sources=request.args.getlist("exclude_source"),
     )
 
     query = build_full_query(
-        title=request.args.get("title", None),
-        must_include_tags=request.args.get("include_tags", "").split(),
-        must_include_characters=request.args.get("include_characters", "").split(),
+        title_tokens=query.get("title", []),
+        must_include_tags=query.get("tag", []),
+        must_include_characters=query.get("character", []),
         exclude_on_sources=request.args.getlist("exclude_on_source"),
         exclude_on_language=request.args.get("exclude_on_language", None),
         include_metadata_only=("include_metadata_only" in request.args),
@@ -246,7 +271,7 @@ def route_index():
     # Number of advanced options selected.
     selected = set()
     for key, value in request.args.items():
-        if value and key not in ["title", "page"]:
+        if value and key not in ["q", "page"]:
             selected.add(key)
 
     # Render.
@@ -260,6 +285,33 @@ def route_index():
         languages=build_language_groups(),
         sources=ALL_SOURCE_TYPES,
     )
+
+
+@app.get("/autocomplete")
+def route_autocomplete():
+    q = request.args.get("q", "")
+    q = decode_query_term(q)
+
+    languages = [row.language for row in
+                 (IndexEntry.select(IndexEntry.language)
+                  .where(IndexEntry.language.startswith(q))
+                  .distinct().limit(10))]
+
+    characters = [row.name for row in
+                  (IndexCharacter.select()
+                   .where(IndexCharacter.name.contains(q))
+                   .order_by(fn.length(IndexCharacter.name))
+                   .limit(10))]
+
+    tags = [row.name for row in
+            (IndexTag.select()
+             .where(IndexTag.name.startswith(q))
+             .order_by(fn.length(IndexTag.name))
+             .limit(10))]
+
+    return [*[("Language", term, f"language:{encode_query_term(term)}") for term in languages],
+            *[("Character", term, f"character:{encode_query_term(term)}") for term in characters],
+            *[("Tag", term, f"tag:{encode_query_term(term)}") for term in tags]][:10]
 
 
 @app.route("/popular")

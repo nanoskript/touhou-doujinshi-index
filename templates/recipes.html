@@ -9,44 +9,44 @@
         <h2>Recipes</h2>
         <dl>
             <dt>
-                <a href="{{ url_for('route_index', language='English') }}">
+                <a href="{{ url_for('route_index', q='language:english') }}">
                     Show only English translations
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>English</code> language option will only show links to translations in
+                        Specifying <code>language:english</code> will only show links to translations in
                         English.
                     </li>
                 </ul>
             </dd>
             <dt>
-                <a href="{{ url_for('route_index', language='English', include_characters='alice marisa') }}">
+                <a href="{{ url_for('route_index', q='language:english character:alice character:marisa') }}">
                     Show only English translations that have Alice and Marisa
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>English</code> language option will only show links to translations in
+                        Specifying <code>language:english</code> will only show links to translations in
                         English.
                     </li>
                     <li>
-                        Specifying <code>alice marisa</code> in the included characters list will
-                        only include results that have both Alice and Marisa as character tags.
+                        Specifying <code>character:alice</code> and <code>character:marisa</code>
+                        will only include results that have both Alice and Marisa as character tags.
                     </li>
                 </ul>
             </dd>
             <dt>
-                <a href="{{ url_for('route_index', language='English', exclude_source=["db"]) }}">
+                <a href="{{ url_for('route_index', q='language:english', exclude_source=["db"]) }}">
                     Show only English translations that have been typeset
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>English</code> language option will only show links to translations in
+                        Specifying <code>language:english</code> will only show links to translations in
                         English.
                     </li>
                     <li>
@@ -56,14 +56,14 @@
                 </ul>
             </dd>
             <dt>
-                <a href="{{ url_for('route_index', language='English', exclude_on_source=["ds"]) }}">
+                <a href="{{ url_for('route_index', q='language:english', exclude_on_source=["ds"]) }}">
                     Show works with English translations that aren't on Dynasty Scans
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>English</code> language option will only show links to translations in
+                        Specifying <code>language:english</code> will only show links to translations in
                         English.
                     </li>
                     <li>
@@ -73,14 +73,14 @@
                 </ul>
             </dd>
             <dt>
-                <a href="{{ url_for('route_index', language='English', exclude_on_source=["eh", "ds", "md"]) }}">
+                <a href="{{ url_for('route_index', q='english', exclude_on_source=["eh", "ds", "md"]) }}">
                     Find translated works on Danbooru that have not been typeset
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>English</code> language option will only show links to translations in
+                        Specifying <code>language:english</code> will only show links to translations in
                         English.
                     </li>
                     <li>
@@ -91,14 +91,14 @@
                 </ul>
             </dd>
             <dt>
-                <a href="{{ url_for('route_index', language='Japanese', exclude_on_language='English') }}">
+                <a href="{{ url_for('route_index', q='language:japanese', exclude_on_language='English') }}">
                     Find works that do not have any English translations yet
                 </a>
             </dt>
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        Selecting the <code>Japanese</code> language option will only show links to raws.
+                        Specifying <code>language:japanese</code> will only show links to raws.
                     </li>
                     <li>
                         Specifying <code>English</code> for the excluded language option will hide results that contain
@@ -114,7 +114,7 @@
             <dd class="recipe-explanation">
                 <ul>
                     <li>
-                        No explanation needed.
+                        N/A.
                     </li>
                 </ul>
             </dd>

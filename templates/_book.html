@@ -15,7 +15,7 @@
             {% if book.series %}
                 <h4>
                     Series:
-                    <a href="{{ url_for('route_index', title=book.series) }}">
+                    <a href="{{ url_for('route_index', q=book.series) }}">
                         {{ book.series }}
                     </a>
                 </h4>
@@ -26,14 +26,16 @@
                 <div>
                     {% for tag in book.tags %}
                         <div class="tag tag-general">
-                            <a href="{{ url_for('route_index', include_tags=tag) }}" rel="nofollow">
+                            <a href="{{ url_for('route_index', q=("tag:" + tag | encode_query_term)) }}"
+                               rel="nofollow">
                                 {{ tag }}
                             </a>
                         </div>
                     {% endfor %}
                     {% for character in book.characters %}
                         <div class="tag tag-character">
-                            <a href="{{ url_for('route_index', include_characters=character) }}" rel="nofollow">
+                            <a href="{{ url_for('route_index', q=("character:" + character | encode_query_term)) }}"
+                               rel="nofollow">
                                 {{ character }}
                             </a>
                         </div>

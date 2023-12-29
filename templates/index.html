@@ -11,6 +11,7 @@
     {% if books %}
         <meta property="og:image" content="{{ url_for('route_thumbnail', key=books[0].thumbnail_id) }}"/>
     {% endif %}
+    <script src="/index.js"></script>
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -37,19 +38,16 @@
 {% endmacro %}
 
 {% block body %}
-    <script>
-      function disableEmptyInputs(form) {
-        const controls = form.elements;
-        for (let i = 0; i < controls.length; i++) {
-          controls[i].disabled = controls[i].value === "";
-        }
-      }
-    </script>
     <form style="margin-top: 2rem;" action="/" method="get" onsubmit="disableEmptyInputs(this);">
         <div style="display: flex; gap: 1rem;">
-            <input name="title" class="form-control"
-                   placeholder="Search by title or series"
-                   value="{{ request.args.title }}"/>
+            <div class="search-container">
+                <input name="q" class="form-control"
+                       placeholder="Search by title, tags, characters, or language"
+                       autocomplete="off" autocapitalize="off" spellcheck="false"
+                       oninput="queryAutocomplete(this);"
+                       value="{{ request.args.q }}"/>
+                <ul id="autocompletion-list"></ul>
+            </div>
             <button type="Submit">Search</button>
         </div>
         <details style="margin: 1rem 0 2rem;">
@@ -65,30 +63,6 @@
                 </b>
             </summary>
             <div class="advanced-options-controls">
-                <div>
-                    <label>Only include entries in this language:</label>
-                    {{ language_selector("language") }}
-                    <small class="form-control-help">
-                        For example, selecting <code>English</code> will only show links to English translations.
-                    </small>
-                </div>
-                <div>
-                    <label>Include these tags:</label>
-                    <input name="include_tags" value="{{ request.args.include_tags }}"
-                           class="form-control"/>
-                    <small class="form-control-help">
-                        For example, <code>yuri</code> will only show results tagged with Yuri or Girls' Love.
-                    </small>
-                </div>
-                <div>
-                    <label>Include these characters:</label>
-                    <input name="include_characters" value="{{ request.args.include_characters }}"
-                           class="form-control"/>
-                    <small class="form-control-help">
-                        For example, <code>alice marisa</code> will only show results tagged with both Alice Margatroid
-                        and Kirisame Marisa.
-                    </small>
-                </div>
                 <div>
                     <label>Hide entries on these websites:</label>
                     <div class="checklist">
