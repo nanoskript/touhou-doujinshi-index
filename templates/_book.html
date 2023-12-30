@@ -43,30 +43,33 @@
                 </div>
             {% endif %}
             <div style="display: flex; flex-direction: column;">
-                {% if (book.all_titles | length) > 1 %}
-                    <details class="description-box">
-                        <summary>Book titles</summary>
-                        <ul style="margin: 0.5rem 0;">
-                            {% for title in book.all_titles %}
-                                <li>{{ title }}</li>
-                            {% endfor %}
-                        </ul>
-                    </details>
-                {% endif %}
-                {% if book.artists %}
-                    <details class="description-box">
-                        <summary>Book artists</summary>
-                        <ul style="margin: 0.5rem 0;">
-                            {% for artist in book.artists %}
-                                <li>
-                                    <a href="{{ url_for('route_index', q=("artist:" + artist | encode_query_term)) }}">
-                                        {{ artist }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </details>
-                {% endif %}
+                <details class="description-box">
+                    <summary>Book titles and artists</summary>
+                    {% if book.all_titles %}
+                        <section style="margin: 0.5rem 0;">
+                            <b>Titles</b>
+                            <ul style="margin: 0.5rem 0;">
+                                {% for title in book.all_titles %}
+                                    <li>{{ title | safe }}</li>
+                                {% endfor %}
+                            </ul>
+                        </section>
+                    {% endif %}
+                    {% if book.artists %}
+                        <section style="margin: 0.5rem 0;">
+                            <b>Artists</b>
+                            <ul style="margin: 0.5rem 0;">
+                                {% for artist in book.artists %}
+                                    <li>
+                                        <a href="{{ url_for('route_index', q=("artist:" + artist | encode_query_term)) }}">
+                                            {{ artist | safe }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </section>
+                    {% endif %}
+                </details>
                 {% for description in book.descriptions %}
                     <details class="description-box">
                         <summary>{{ description.name }}</summary>
