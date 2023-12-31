@@ -2,11 +2,11 @@
 {% from "_book.html" import render_book %}
 
 {% block title %}
-    {{ book.title | safe }}
+    {{ book.main_title | safe }}
 {% endblock %}
 
 {% block description %}
-    Read all translations of {{ book.title }}.
+    Read all translations of {{ book.main_title }}.
     {{ build_description(book) }}
 {% endblock %}
 
