@@ -1,8 +1,20 @@
+import os
+import datetime
+
 from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 
 from .date_time_utc_field import DateTimeUTCField
 
-db = SqliteDatabase("data/index.db")
+DATABASE_PATH = "data/index.db"
+db = SqliteDatabase(DATABASE_PATH)
+
+
+def database_last_modified() -> datetime.datetime:
+    # Assume server is running on UNIX based
+    # filesystem so timezone promotion is valid.
+    timezone = datetime.timezone.utc
+    timestamp = os.stat(DATABASE_PATH).st_mtime
+    return datetime.datetime.fromtimestamp(timestamp, tz=timezone)
 
 
 class BaseModel(Model):

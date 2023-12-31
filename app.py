@@ -142,6 +142,11 @@ def pluralize(number: int, string: str, plural: str = None) -> str:
     return f"{number} {plural}"
 
 
+@app.context_processor
+def inject_template_globals():
+    return dict(database_last_modified=database_last_modified())
+
+
 def build_full_query(
     title_tokens: list[str],
     must_include_tags: list[str],
