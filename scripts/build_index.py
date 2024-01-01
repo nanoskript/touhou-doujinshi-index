@@ -158,6 +158,7 @@ def coalesce_book_series(lists: list[EntryList]) -> list[tuple[EntrySeries, list
 
 
 def main():
+    # Form groups based on thumbnail similarity.
     tree = form_gallery_groups()
     for entry in tqdm(filter_db_entries()):
         tree.add_or_create(entry, similarity=0.9)
@@ -174,6 +175,12 @@ def main():
     for entry in tqdm(tora_entries()):
         tree.add_or_create(entry, similarity=0.9)
     lists = tree.all_entry_lists()
+
+    # Add linked entries to each group.
+    # This includes Pixiv sources.
+    for entry_list in lists:
+        for entry in entry_list.entries.copy():
+            entry_list.entries += linked_entries(entry)
 
     # Construct database.
     tables = [
@@ -273,15 +280,17 @@ def main():
         IndexArtist.bulk_create([IndexArtist(name=name) for name in all_artists], batch_size)
         IndexBookArtist.bulk_create(book_artists, batch_size)
 
-        all_languages, entries = set(), []
+        # Entries may sometimes belong to more than one book.
+        all_languages, entries = set(), {}
         for item, book in zip(tqdm(lists), books):
             for entry in item.entries:
                 language = entry_language(entry)
                 if language:
                     all_languages.add(language)
 
-                entries.append(IndexEntry(
-                    id=entry_key(entry),
+                key = entry_key(entry)
+                entries[key] = IndexEntry(
+                    id=key,
                     book=book,
                     title=entry_title(entry),
                     url=entry_url(entry),
@@ -289,11 +298,11 @@ def main():
                     language=entry_language(entry),
                     page_count=entry_page_count_sanitized(entry),
                     comments=entry_comments(entry),
-                ))
+                )
 
         all_language_models = [IndexLanguage(name=name) for name in all_languages]
         IndexLanguage.bulk_create(all_language_models)
-        IndexEntry.bulk_create(entries, batch_size)
+        IndexEntry.bulk_create(entries.values(), batch_size)
 
 
 if __name__ == '__main__':

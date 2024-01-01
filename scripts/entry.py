@@ -6,12 +6,13 @@ from typing import Union, Optional
 
 from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
-from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists
+from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists, db_pixiv_id
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments, ds_entry_authors
 from .source_eh import EHEntry, gallery_artists, gallery_circles
 from .source_mb import MBDataEntry
 from .source_md import MDEntry, md_manga_tags, md_manga_descriptions, md_manga_comments, md_manga_titles, \
     md_manga_authors_and_artists
+from .source_px import PXEntry, get_pixiv_entry
 from .source_tora import ToraDataEntry
 
 Entry = Union[
@@ -23,6 +24,7 @@ Entry = Union[
     CTHEntry,
     MBDataEntry,
     ToraDataEntry,
+    PXEntry,
 ]
 
 
@@ -48,6 +50,8 @@ def entry_key(entry: Entry) -> str:
         return f"mb-{entry.id}"
     if isinstance(entry, ToraDataEntry):
         return f"tora-{entry.id}"
+    if isinstance(entry, PXEntry):
+        return f"px-{entry.id}"
 
 
 ALL_SOURCE_TYPES = {
@@ -59,6 +63,7 @@ ALL_SOURCE_TYPES = {
     "cth": "comic.thproject.net",
     "mb": "Melonbooks",
     "tora": "Toranoana",
+    "px": "Pixiv",
 }
 
 
@@ -85,6 +90,8 @@ def entry_title(entry: Entry) -> str:
         return entry.title
     if isinstance(entry, ToraDataEntry):
         return entry.title
+    if isinstance(entry, PXEntry):
+        return entry.data["body"]["title"]
 
 
 # Most important title appears first in list.
@@ -106,7 +113,7 @@ def entry_book_titles(entry: Entry) -> list[str]:
     return [entry_title(entry)]
 
 
-# FIXME: Currently, we assume there is at least one thumbnail.
+# FIXME: Currently, we assume there is at least one thumbnail for non-linked entries.
 def entry_thumbnails(entry: Entry) -> list[bytes]:
     if isinstance(entry, DBEntry):
         return [entry.thumbnail]
@@ -124,6 +131,7 @@ def entry_thumbnails(entry: Entry) -> list[bytes]:
         return [entry.thumbnail]
     if isinstance(entry, ToraDataEntry):
         return [entry.thumbnail]
+    return []
 
 
 def entry_date(entry: Entry) -> Optional[datetime]:
@@ -143,6 +151,8 @@ def entry_date(entry: Entry) -> Optional[datetime]:
         return entry.release_date
     if isinstance(entry, ToraDataEntry):
         return entry.release_date
+    if isinstance(entry, PXEntry):
+        return datetime.fromisoformat(entry.data["body"]["createDate"])
 
 
 def entry_date_sanitized(entry: Entry) -> Optional[datetime]:
@@ -152,7 +162,7 @@ def entry_date_sanitized(entry: Entry) -> Optional[datetime]:
         return date
 
 
-def entry_url(entry: Entry) -> Optional[str]:
+def entry_url(entry: Entry) -> str | None:
     if isinstance(entry, DBEntry):
         return f"https://danbooru.donmai.us/pools/{entry.pool_id}"
     if isinstance(entry, EHEntry):
@@ -167,6 +177,8 @@ def entry_url(entry: Entry) -> Optional[str]:
         return f"https://www.melonbooks.co.jp/detail/detail.php?product_id={entry.id}"
     if isinstance(entry, ToraDataEntry):
         return f"https://ecs.toranoana.jp/tora/ec/item/{entry.id}/"
+    if isinstance(entry, PXEntry):
+        return f"https://www.pixiv.net/artworks/{entry.id}"
 
 
 # If absent, the entry is considered to be metadata-only.
@@ -189,6 +201,8 @@ def entry_language(entry: Entry) -> Optional[str]:
         return entry.language
     if isinstance(entry, CTHEntry):
         return "Chinese"
+    if isinstance(entry, PXEntry):
+        return "Japanese"
 
 
 def entry_page_count(entry: Entry) -> Optional[int]:
@@ -208,6 +222,8 @@ def entry_page_count(entry: Entry) -> Optional[int]:
         return entry.pages
     if isinstance(entry, ToraDataEntry):
         return entry.pages
+    if isinstance(entry, PXEntry):
+        return entry.data["body"]["pageCount"]
 
 
 def entry_page_count_sanitized(entry: Entry) -> Optional[int]:
@@ -291,6 +307,7 @@ def entry_artists(entry: Entry) -> list[str]:
     if isinstance(entry, ToraDataEntry):
         # TODO: Add artists for Toranoana entries.
         return []
+    return []
 
 
 def entry_descriptions(entry: Entry) -> dict[str, str]:
@@ -306,9 +323,14 @@ def entry_descriptions(entry: Entry) -> dict[str, str]:
         return {"Melonbooks description (Japanese)": entry.comments}
     if isinstance(entry, ToraDataEntry) and entry.comments:
         return {"Toranoana description (Japanese)": entry.comments}
+    if isinstance(entry, PXEntry):
+        description = entry.data["body"]["description"]
+        if description:
+            return {"Pixiv description (Japanese)": description}
     return {}
 
 
+# Only for sources that are updated regularly.
 def entry_comments(entry: Entry) -> Optional[int]:
     if isinstance(entry, DBEntry):
         return len(DBComments.get(pool=entry).comments)
@@ -338,3 +360,11 @@ def entry_series(entry: Entry) -> Optional[EntrySeries]:
             key = f"ds-{tag['permalink']}"
             comments = ds_entry_comments(entry) or 0
             return EntrySeries(key, title=tag["name"], comments=comments)
+
+
+def linked_entries(entry: Entry) -> list[Entry]:
+    if isinstance(entry, DBEntry):
+        pixiv_entry = get_pixiv_entry(db_pixiv_id(entry))
+        if pixiv_entry:
+            return [pixiv_entry]
+    return []

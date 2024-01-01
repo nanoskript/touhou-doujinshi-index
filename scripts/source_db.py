@@ -1,3 +1,4 @@
+import urllib.parse
 from collections import Counter
 
 import requests
@@ -74,6 +75,12 @@ def db_entry_artists(entry: DBEntry) -> list[str]:
         artists += post["tag_string_artist"].split()
     artists = [artist.replace("_", " ") for artist in artists]
     return list(set(artists))
+
+
+def db_pixiv_id(entry: DBEntry) -> int | None:
+    cover_post = entry.posts[0]
+    if cover_post["pixiv_id"]:
+        return cover_post["pixiv_id"]
 
 
 # TODO: Include 東方 as query.
