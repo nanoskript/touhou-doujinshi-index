@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bookworm
 
-RUN apt-get update && apt-get install -y g++
+RUN apt-get update && apt-get install -y clang
 
 RUN pip install --no-cache-dir pdm
 ADD ./pyproject.toml ./pdm.lock ./

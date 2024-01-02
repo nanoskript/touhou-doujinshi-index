@@ -2,14 +2,14 @@ import pyximport
 
 pyximport.install()
 
-from .bktree import BKTree
+from .hamming import HammingHashList
 from .build_image_hashes import entry_h8s
 from .entry import Entry, EntryList
 from .utility import deduplicate_by_identity
 
 
 class EntryListImageTree:
-    tree: BKTree
+    hashes: HammingHashList
     groups: dict[int, EntryList]
     orphans: list[Entry]
 
@@ -17,13 +17,13 @@ class EntryListImageTree:
         for h8 in h8s:
             if h8 not in self.groups:
                 self.groups[h8] = group
-                self.tree.add(h8)
+                self.hashes.add(h8)
 
     def __init__(self, initial_groups=None):
         if initial_groups is None:
             initial_groups = []
 
-        self.tree = BKTree()
+        self.hashes = HammingHashList()
         self.groups = {}
         self.orphans = []
 
@@ -39,7 +39,7 @@ class EntryListImageTree:
 
         threshold = int((1.0 - similarity) * (8 * 8))
         for h8 in h8s:
-            closest = self.tree.find_closest(h8, threshold)
+            closest = self.hashes.find_closest(h8, threshold)
             if closest is not None:
                 group = self.groups[closest]
                 group.entries.append(entry)

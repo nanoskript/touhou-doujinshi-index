@@ -1,4 +1,9 @@
+import os
 from distutils.extension import Extension
+
+# Prefer to build with clang for empirically improved auto-vectorization.
+os.environ["CC"] = "clang"
+os.environ["CXX"] = "clang++"
 
 
 def make_ext(module, file):
