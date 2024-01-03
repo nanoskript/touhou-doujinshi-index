@@ -50,6 +50,8 @@ class MBDataEntry:
     release_date: datetime
     comments: str
     characters: list[str]
+    circles: list[str]
+    authors: list[str]
     thumbnail: bytes
 
 
@@ -84,11 +86,22 @@ def mb_entries() -> list[MBDataEntry]:
             content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
             comments.append(f"<b>{heading.text}</b>\n{content}")
 
-        characters = []
+        characters, authors, circles = [], [], []
         for link in select_links(tree):
+            href = link.attrib["href"]
+            text = link.text and link.text.strip()
+
             prefix = "https://www.melonbooks.co.jp/tags/index.php?chara="
-            if link.attrib["href"].startswith(prefix):
-                characters.append(link.text.strip().removeprefix("#"))
+            if href.startswith(prefix):
+                characters.append(text.removeprefix("#"))
+
+            suffix = "&text_type=author"
+            if href.endswith(suffix):
+                authors.append(text)
+
+            prefix = "https://www.melonbooks.co.jp/circle/index.php?circle_id="
+            if href.startswith(prefix) and ("作品数" not in text):
+                circles.append(text)
 
         entries.append(MBDataEntry(
             id=entry.id,
@@ -97,6 +110,8 @@ def mb_entries() -> list[MBDataEntry]:
             release_date=release_date,
             comments=("<br/>".join(comments)),
             characters=characters,
+            circles=circles,
+            authors=authors,
             thumbnail=entry.thumbnail,
         ))
     return entries
