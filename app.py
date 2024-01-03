@@ -317,38 +317,53 @@ def route_index():
 
 @app.get("/autocomplete")
 def route_autocomplete():
+    def suggestions_for_string(string: str):
+        category = None
+        if ":" in string:
+            category, string = string.split(":", maxsplit=1)
+        string = decode_query_term(string)
+
+        # Python keeps insertion order of dictionaries.
+        # We use this to keep suggestion categories ordered.
+        suggestions = {
+            "language": [row.name for row in
+                         (IndexLanguage.select()
+                          .where(IndexLanguage.name.startswith(string))
+                          .order_by(IndexLanguage.name).limit(10))],
+            "character": [row.name for row in
+                          (IndexCharacter.select()
+                           .where(IndexCharacter.name.contains(string))
+                           .order_by(IndexCharacter.name).limit(10))],
+            "tag": [row.name for row in
+                    (IndexTag.select()
+                     .where(IndexTag.name.startswith(string))
+                     .order_by(IndexTag.name).limit(10))],
+            "artist": [row.name for row in
+                       (IndexArtist.select()
+                        .where(IndexArtist.name.startswith(string))
+                        .order_by(IndexArtist.name).limit(10))],
+        }
+
+        if category:
+            return {category: suggestions[category.lower()]}
+        return suggestions
+
+    # Try all suffixes for autocompletion.
     q = request.args.get("q", "")
-    category = None
-    if ":" in q:
-        category, q = q.split(":", maxsplit=1)
-    q = decode_query_term(q)
+    tokens = q.split()
+    all_suggestions = defaultdict(dict)
+    for start in range(len(tokens)):
+        suffix = " ".join(tokens[start:])
+        for kind, terms in suggestions_for_string(suffix).items():
+            for term in terms:
+                if term not in all_suggestions[kind]:
+                    query = f"{kind}:{encode_query_term(term)}"
+                    suggestion = " ".join(tokens[:start] + [query])
+                    all_suggestions[kind][term] = suggestion
 
-    suggestions = [
-        ("language", [row.name for row in
-                      (IndexLanguage.select()
-                       .where(IndexLanguage.name.startswith(q))
-                       .order_by(IndexLanguage.name).limit(10))]),
-        ("character", [row.name for row in
-                       (IndexCharacter.select()
-                        .where(IndexCharacter.name.contains(q))
-                        .order_by(IndexCharacter.name).limit(10))]),
-        ("tag", [row.name for row in
-                 (IndexTag.select()
-                  .where(IndexTag.name.startswith(q))
-                  .order_by(IndexTag.name).limit(10))]),
-        ("artist", [row.name for row in
-                    (IndexArtist.select()
-                     .where(IndexArtist.name.startswith(q))
-                     .order_by(IndexArtist.name).limit(10))])
-    ]
-
-    if category:
-        suggestions = [(kind, terms)
-                       for kind, terms in suggestions
-                       if kind == category]
-
-    return [(kind.title(), term, f"{kind}:{encode_query_term(term)}")
-            for kind, terms in suggestions for term in terms][:10]
+    return [(kind.title(), term, query)
+            for kind, suggestions in all_suggestions.items()
+            for term, query in suggestions.items()][:10]
 
 
 @app.route("/popular")

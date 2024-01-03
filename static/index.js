@@ -20,7 +20,7 @@ async function queryAutocomplete(input) {
     return await (await fetch(url, options)).json();
   };
 
-  const replaceResults = (terms, results) => {
+  const replaceResults = (results) => {
     // Retrieve and clear existing suggestions.
     const list = document.querySelector("#autocompletion-list");
     list.innerHTML = "";
@@ -29,8 +29,7 @@ async function queryAutocomplete(input) {
     for (const [category, term, query] of results) {
       const onClick = () => {
         // Guaranteed to be non-empty.
-        terms[terms.length - 1] = query;
-        input.value = terms.join(" ") + " ";
+        input.value = query + " ";
 
         // Clear results and focus input.
         list.innerHTML = "";
@@ -45,9 +44,8 @@ async function queryAutocomplete(input) {
   };
 
   try {
-    const terms = input.value.split(/\s+/);
-    const q = terms.length > 0 ? terms[terms.length - 1] : "";
-    replaceResults(terms, await requestResults(q));
+    const results = await requestResults(input.value);
+    replaceResults(results);
   } catch (_error) {
     // Request was overriden and aborted.
   }
