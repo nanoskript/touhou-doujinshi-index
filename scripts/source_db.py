@@ -69,6 +69,14 @@ def pool_translation_ratio(entry: DBEntry) -> float:
     return translation_count / len(entry.posts)
 
 
+def pool_english_text_ratio(entry: DBEntry) -> float:
+    english_count = 0
+    for post in entry.posts:
+        if "english_text" in post["tag_string_general"]:
+            english_count += 1
+    return english_count / len(entry.posts)
+
+
 def db_entry_artists(entry: DBEntry) -> list[str]:
     artists = []
     for post in entry.posts:

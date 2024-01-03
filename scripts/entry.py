@@ -6,7 +6,8 @@ from typing import Union, Optional
 
 from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
-from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists, db_pixiv_id
+from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists, db_pixiv_id, \
+    pool_english_text_ratio
 from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments, ds_entry_authors
 from .source_eh import EHEntry, gallery_artists, gallery_circles
 from .source_mb import MBDataEntry
@@ -184,7 +185,9 @@ def entry_url(entry: Entry) -> str | None:
 # If absent, the entry is considered to be metadata-only.
 def entry_language(entry: Entry) -> Optional[str]:
     if isinstance(entry, DBEntry):
-        if pool_translation_ratio(entry) >= 0.5:
+        translation = pool_translation_ratio(entry)
+        english = pool_english_text_ratio(entry)
+        if translation >= 0.5 or english >= 0.8:
             return "English"
         return "Japanese"
     if isinstance(entry, EHEntry):
