@@ -27,6 +27,8 @@ class OrgEntry(BaseModel):
     titles = JSONField()
     release_date = CharField()
     characters = JSONField()
+    authors = JSONField()
+    circles = JSONField()
     pages = IntegerField(null=True)
     thumbnail = BlobField(null=True)
     comments = CharField(null=True)
@@ -70,20 +72,32 @@ def extract_entries():
 
     entries = []
     for book in tqdm(books):
+        thumbnail = read_thumbnail(book.book_id)
+        if not thumbnail:
+            continue
+
         characters = [character.name_en
                       for character in Character.select()
                       .join(BookCharacter, on=(Character.character_id == BookCharacter.character_id))
                       .where(BookCharacter.book_id == book.book_id)]
 
-        thumbnail = read_thumbnail(book.book_id)
-        if not thumbnail:
-            continue
+        authors = [author.name_en or author.name_jp
+                   for author in Author.select()
+                   .join(BookAuthor, on=(Author.author_id == BookAuthor.author_id))
+                   .where(BookAuthor.book_id == book.book_id)]
+
+        circles = [circle.name_en or circle.name_jp
+                   for circle in Circle.select()
+                   .join(BookCircle, on=(Circle.circle_id == BookCircle.circle_id))
+                   .where(BookCircle.book_id == book.book_id)]
 
         entries.append(OrgEntry(
             id=book.book_id,
             titles=list(filter(None, [book.name_en, book.name_jp])),
             release_date=book.released,
             characters=characters,
+            authors=authors,
+            circles=circles,
             pages=book.pages or None,
             thumbnail=thumbnail,
             comments=ftfy.fix_text(book.info) or None,

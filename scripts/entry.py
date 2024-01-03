@@ -299,8 +299,7 @@ def entry_artists(entry: Entry) -> list[str]:
     if isinstance(entry, MDEntry):
         return md_manga_authors_and_artists(entry.manga)
     if isinstance(entry, OrgEntry):
-        # TODO: Add artists for doujinshi.org entries.
-        return []
+        return entry.authors + entry.circles
     if isinstance(entry, CTHEntry):
         # TODO: Add artists for CTH entries.
         return []
