@@ -31,6 +31,8 @@ class ToraDataEntry:
     release_date: datetime
     comments: str
     characters: list[str]
+    circles: list[str]
+    authors: list[str]
     thumbnail: bytes
 
 
@@ -70,12 +72,14 @@ def tora_entries() -> list[ToraDataEntry]:
             content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
             comments.append(f"<b>{heading.text}</b>\n{content}")
 
-        characters = []
-        characters_key = "メインキャラ"
-        if characters_key in table_nodes:
-            for link in table_nodes[characters_key].findall("a"):
-                text = etree.tostring(link, method="text", encoding="unicode").strip()
-                characters.append(text)
+        def link_text_by_table_key(key: str):
+            link_text = []
+            if key in table_nodes:
+                for link in table_nodes[key].findall(".//a"):
+                    if link.attrib["href"] != "#":
+                        string = etree.tostring(link, method="text", encoding="unicode")
+                        link_text.append(string.strip())
+            return link_text
 
         entries.append(ToraDataEntry(
             id=entry.id,
@@ -83,7 +87,9 @@ def tora_entries() -> list[ToraDataEntry]:
             pages=pages,
             release_date=release_date,
             comments=("".join(comments)),
-            characters=characters,
+            characters=link_text_by_table_key("メインキャラ"),
+            circles=link_text_by_table_key("サークル名"),
+            authors=link_text_by_table_key("作家"),
             thumbnail=entry.thumbnail,
         ))
     return entries

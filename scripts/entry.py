@@ -306,8 +306,7 @@ def entry_artists(entry: Entry) -> list[str]:
     if isinstance(entry, MBDataEntry):
         return entry.authors + entry.circles
     if isinstance(entry, ToraDataEntry):
-        # TODO: Add artists for Toranoana entries.
-        return []
+        return entry.authors + entry.circles
     return []
 
 
