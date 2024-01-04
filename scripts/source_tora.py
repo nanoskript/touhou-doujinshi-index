@@ -1,4 +1,5 @@
 import dataclasses
+import re
 from datetime import datetime
 
 import requests
@@ -30,6 +31,7 @@ class ToraDataEntry:
     pages: int
     release_date: datetime
     comments: str
+    pairings: list[frozenset[str]]
     characters: list[str]
     circles: list[str]
     authors: list[str]
@@ -87,6 +89,9 @@ def tora_entries() -> list[ToraDataEntry]:
             pages=pages,
             release_date=release_date,
             comments=("".join(comments)),
+            pairings=[frozenset(re.split("[×＋]", tag))
+                      for tag in link_text_by_table_key("カップリング")
+                      for tag in tag.split("、")],
             characters=link_text_by_table_key("メインキャラ"),
             circles=link_text_by_table_key("サークル名"),
             authors=link_text_by_table_key("作家"),

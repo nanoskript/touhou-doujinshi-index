@@ -51,18 +51,25 @@ def filter_ds_entries():
     return entries
 
 
-def ds_entry_characters(entry: DSEntry) -> list[str]:
-    characters = []
+def ds_entry_pairings(entry: DSEntry) -> list[frozenset[str]]:
+    pairings = []
     for tag in entry.data["tags"]:
         if tag["type"] == "Pairing":
-            characters += tag["name"].split(" x ")
-    return list(set(characters))
+            pairings.append(frozenset(tag["name"].split(" x ")))
+    return list(set(pairings))
+
+
+def ds_all_pairings() -> set[frozenset[str]]:
+    pairings = []
+    for entry in DSEntry.select():
+        pairings += ds_entry_pairings(entry)
+    return set(pairings)
 
 
 def ds_entry_tags(entry: DSEntry) -> list[str]:
     tags = []
     for tag in entry.data["tags"]:
-        if tag["type"] in ["General", "Pairing"]:
+        if tag["type"] in ["General"]:
             tags.append(tag["name"])
     return tags
 

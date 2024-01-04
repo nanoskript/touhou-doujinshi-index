@@ -6,7 +6,7 @@ from scipy.cluster.hierarchy import DisjointSet
 from scripts.source_ds import filter_ds_entries
 from scripts.source_mb import mb_entries
 from scripts.source_tora import tora_entries
-from .character_index import CharacterIndex
+from .character_index import CharacterIndex, PairingIndex
 from .source_md import all_md_chapters
 from .entry import *
 from .entry_list_image_tree import EntryListImageTree
@@ -52,19 +52,34 @@ def form_gallery_groups() -> EntryListImageTree:
     return tree
 
 
-def entry_list_characters(index: CharacterIndex, entry_list: EntryList) -> list[str]:
+def entry_list_characters(
+    character_index: CharacterIndex,
+    pairing_index: PairingIndex,
+    entry_list: EntryList,
+) -> list[str]:
     characters, plausible = [], []
     for entry in entry_list.entries:
         characters += entry_characters(entry)
         plausible += entry_characters_plausible(entry)
+        for pairing in entry_pairings(entry):
+            characters += list(pairing_index.canonicalize(pairing))
 
-    characters = [index.canonicalize(name) for name in characters]
-    plausible = [index.find_and_canonicalize(name) for name in plausible]
+    characters = [character_index.canonicalize(name) for name in characters]
+    plausible = [character_index.find_and_canonicalize(name) for name in plausible]
     characters += list(filter(None, plausible))
     return list(sorted(set(characters)))
 
 
-def entry_list_tags(entry_list: EntryList) -> list[str]:
+def entry_list_pairing_tags(index: PairingIndex, entry_list: EntryList) -> list[str]:
+    tags = []
+    for entry in entry_list.entries:
+        for pairing in entry_pairings(entry):
+            pairing = index.canonicalize(pairing)
+            tags.append(" x ".join(sorted(pairing)))
+    return list(sorted(set(tags)))
+
+
+def entry_list_tags(pairings: PairingIndex, entry_list: EntryList) -> list[str]:
     synonyms = {
         "Girls' Love": "Yuri",
         "Slice of Life": "Slice of life",
@@ -87,6 +102,8 @@ def entry_list_tags(entry_list: EntryList) -> list[str]:
         for tag in entry_tags_plausible(entry):
             if tag in synonyms:
                 tags.append(synonyms[tag])
+
+    tags += entry_list_pairing_tags(pairings, entry_list)
     return list(sorted(set(tags)))
 
 
@@ -201,6 +218,7 @@ def main():
 
     db.connect()
     character_index = CharacterIndex()
+    pairing_index = PairingIndex(character_index)
     series_pools = coalesce_book_series(lists)
     batch_size = 10000
 
@@ -254,7 +272,7 @@ def main():
 
         all_tags, book_tags = set(), []
         for item, book in zip(tqdm(lists), books):
-            tags = entry_list_tags(item)
+            tags = entry_list_tags(pairing_index, item)
             all_tags.update(set(tags))
             book_tags.extend((IndexBookTag(book=book, tag=tag) for tag in tags))
         IndexTag.bulk_create([IndexTag(name=name) for name in all_tags], batch_size)
@@ -262,7 +280,7 @@ def main():
 
         all_characters, book_characters = set(), []
         for item, book in zip(tqdm(lists), books):
-            characters = entry_list_characters(character_index, item)
+            characters = entry_list_characters(character_index, pairing_index, item)
             all_characters.update(set(characters))
             book_characters.extend((
                 IndexBookCharacter(book=book, character=character)

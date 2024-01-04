@@ -8,7 +8,7 @@ from .data_comic_thproject_net import CTHEntry
 from .data_doujinshi_org import OrgEntry, org_entry_release_date
 from .source_db import DBEntry, pool_translation_ratio, DBPoolDescription, DBComments, db_entry_artists, db_pixiv_id, \
     pool_english_text_ratio
-from .source_ds import DSEntry, ds_entry_characters, ds_entry_tags, ds_entry_series, ds_entry_comments, ds_entry_authors
+from .source_ds import DSEntry, ds_entry_pairings, ds_entry_tags, ds_entry_series, ds_entry_comments, ds_entry_authors
 from .source_eh import EHEntry, gallery_artists, gallery_circles
 from .source_mb import MBDataEntry
 from .source_md import MDEntry, md_manga_tags, md_manga_descriptions, md_manga_comments, md_manga_titles, \
@@ -233,7 +233,17 @@ def entry_page_count_sanitized(entry: Entry) -> Optional[int]:
     return entry_page_count(entry) or None
 
 
+# FIXME: Handle singleton pairing sets.
+def entry_pairings(entry: Entry) -> list[frozenset[str]]:
+    if isinstance(entry, DSEntry):
+        return ds_entry_pairings(entry)
+    if isinstance(entry, ToraDataEntry):
+        return entry.pairings
+    return []
+
+
 # List of strings that are guaranteed to be characters.
+# Does not necessarily include characters from pairings.
 def entry_characters(entry: Entry) -> list[str]:
     if isinstance(entry, DBEntry):
         appearances = defaultdict(int)
@@ -253,8 +263,6 @@ def entry_characters(entry: Entry) -> list[str]:
                 character = tag.removeprefix("character:")
                 characters.append(character.title())
         return list(sorted(characters))
-    if isinstance(entry, DSEntry):
-        return ds_entry_characters(entry)
     if isinstance(entry, OrgEntry):
         return entry.characters
     if isinstance(entry, ToraDataEntry):
