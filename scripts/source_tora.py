@@ -54,9 +54,9 @@ def tora_entries() -> list[ToraDataEntry]:
             table_text[header] = text
 
         release_date = None
-        release_date_key = "発行日"
-        if release_date_key in table_text:
-            release_date = datetime.strptime(table_text[release_date_key], "%Y/%m/%d")
+        for release_date_key in ["発行日", "公開日"]:
+            if release_date_key in table_text:
+                release_date = datetime.strptime(table_text[release_date_key], "%Y/%m/%d")
 
         pages = None
         pages_key = "種別/サイズ"
