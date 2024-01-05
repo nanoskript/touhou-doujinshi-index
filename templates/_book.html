@@ -1,3 +1,47 @@
+{% macro render_book_inline_script() %}
+    <script>
+      const ALLOW_NSFW_SITES_KEY = "allowNSFWSites";
+
+      function showNSFWWarning(id) {
+        if (JSON.parse(window.localStorage.getItem(ALLOW_NSFW_SITES_KEY))) {
+          return true;
+        }
+
+        document.querySelector(`#${id}`).style.display = "none";
+        document.querySelector(`#${id}-warning`).style.display = "unset";
+        return false;
+      }
+
+      function onNSFWCancel(id) {
+        document.querySelector(`#${id}`).style.display = "unset";
+        document.querySelector(`#${id}-warning`).style.display = "none";
+        return false;
+      }
+
+      function onNSFWContinue() {
+        window.localStorage.setItem(ALLOW_NSFW_SITES_KEY, JSON.stringify(true));
+      }
+    </script>
+{% endmacro %}
+
+{% macro render_entry_link(entry) %}
+    {% set is_nsfw = entry | entry_source_is_nsfw %}
+    <a id="{{ entry.id }}" href="{{ entry.url }}" rel="nofollow"
+       {% if is_nsfw %}onclick="return showNSFWWarning(`{{ entry.id }}`);"{% endif %}>
+        {{ entry.title | safe }}
+    </a>
+    {% if is_nsfw %}
+        <div id="{{ entry.id }}-warning" style="display: none;">
+            {{ entry | entry_readable_source }} is a site that may contain explicit or NSFW
+            content. Do you wish to continue?
+            <span>
+                <a href="{{ entry.url }}" onclick="onNSFWContinue();">Yes</a> /
+                <a href="#" onclick="return onNSFWCancel(`{{ entry.id }}`);">No</a>
+            </span>
+        </div>
+    {% endif %}
+{% endmacro %}
+
 {% macro render_book(book, footer=None) %}
     <section class="book-container">
         <figure class="book-container-thumbnail">
@@ -82,9 +126,7 @@
                     <div class="entry-box">
                         <div>
                             {% if entry.url %}
-                                <a href="{{ entry.url }}" rel="nofollow">
-                                    {{ entry.title | safe }}
-                                </a>
+                                {{ render_entry_link(entry) }}
                             {% else %}
                                 {{ entry.title | safe }}
                             {% endif %}

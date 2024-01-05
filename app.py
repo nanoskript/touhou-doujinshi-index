@@ -127,6 +127,11 @@ def template_entry_readable_source(entry: IndexEntry) -> str:
     return entry_key_readable_source(entry.id)
 
 
+@app.template_filter("entry_source_is_nsfw")
+def template_entry_source_is_nsfw(entry: IndexEntry) -> bool:
+    return entry_key_readable_source(entry.id) in ["EH", "Danbooru"]
+
+
 @app.template_global()
 def url_with(route: str, **kwargs):
     args = request.args.to_dict(flat=False)

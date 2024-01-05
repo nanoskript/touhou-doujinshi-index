@@ -1,3 +1,5 @@
+{% from "_book.html" import render_book_inline_script %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,6 +38,7 @@
 <main>
     {% block body %}
     {% endblock %}
+    {{ render_book_inline_script() }}
 </main>
 <hr/>
 <footer style="margin: 2rem 0; text-align: center;">
