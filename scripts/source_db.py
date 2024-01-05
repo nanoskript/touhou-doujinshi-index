@@ -155,7 +155,12 @@ def scrape_pools():
             print(f"[pool/walled] {pool_id}")
             continue
 
-        thumbnail_url = posts[0]["preview_file_url"]
+        media_urls = {}
+        for variant in posts[0]["media_asset"]["variants"]:
+            media_urls[variant["type"]] = variant["url"]
+
+        fallback_url = posts[0]["preview_file_url"]
+        thumbnail_url = media_urls.get("360x360", fallback_url)
         thumbnail = requests.get(thumbnail_url, headers=HEADERS).content
 
         DBEntry.create(
