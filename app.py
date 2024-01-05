@@ -169,10 +169,15 @@ def build_full_query(
                           .join(IndexBookTitle)
                           .where(IndexBookTitle.title.contains(token)))
 
+        books_by_entry_id = (IndexBook.select()
+                             .join(IndexEntry)
+                             .where(IndexEntry.id == token))
+
         query = query.where(
             IndexEntry.title.contains(token) |
             (IndexBook.id << books_by_title) |
-            (IndexBook.id << books_by_series)
+            (IndexBook.id << books_by_series) |
+            (IndexBook.id << books_by_entry_id)
         )
 
     for tag in must_include_tags:
