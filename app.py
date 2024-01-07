@@ -209,13 +209,13 @@ def build_full_query(
                              .where(IndexEntry.id.startswith(source)))
         if f.language:
             books_with_source = (books_with_source
-                                 .where(IndexEntry.language_id == f.language))
+                                 .where(IndexEntry.language_id ** f.language))
         query = query.where(~(IndexBook.id << books_with_source))
 
     if exclude_on_language:
         books_with_language = (IndexBook.select()
                                .join(IndexEntry)
-                               .where(IndexEntry.language_id == exclude_on_language))
+                               .where(IndexEntry.language_id ** exclude_on_language))
         query = query.where(~(IndexBook.id << books_with_language))
 
     if not include_metadata_only:
