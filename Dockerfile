@@ -14,7 +14,5 @@ ADD ./scripts ./scripts
 ADD ./templates ./templates
 ADD ./app.py ./
 
-CMD ["pdm", "run", \
-    "newrelic-admin", "run-program", "gunicorn", \
-	"--bind", "0.0.0.0:$PORT", \
-	"-k", "gevent", "app:app"]
+CMD pdm run gunicorn --bind 0.0.0.0:$PORT -k gevent app:app
+

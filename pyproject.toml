@@ -19,7 +19,6 @@ dependencies = [
     "rarfile>=4.1",
     "lxml>=4.9.3",
     "cssselect>=1.2.0",
-    "newrelic>=9.2.0",
     "python-dateutil>=2.8.2",
 ]
 requires-python = ">=3.10,<3.11"
