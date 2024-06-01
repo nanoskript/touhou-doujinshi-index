@@ -2,6 +2,7 @@ import io
 import os
 from typing import TypeVar
 from urllib.parse import urlencode
+from pprint import pprint
 
 import requests
 from PIL import Image, ImageFile
@@ -68,5 +69,11 @@ def get_with_proxy(url: str, retries: int, params: dict[str, str | int] = None):
             return response
 
         attempt += 1
-        print(f"[retry] {url}")
+        print(f"[retry/{response.status_code}] {url}")
     raise ValueError(f"Failed to fetch: {url}")
+
+
+def tracing_response_hook(response: requests.Response, *_args, **_kwargs):
+    if not response.ok:
+        print(f"[response/{response.status_code}] {response.url}")
+        pprint(dict(response.headers))

@@ -1,12 +1,17 @@
-import urllib.parse
 from collections import Counter
 
 import requests
 from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
-from .utility import HEADERS
+from .utility import HEADERS, tracing_response_hook
 
+requests = requests.Session()
+retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[429])
+requests.mount("https://", HTTPAdapter(max_retries=retries))
+requests.hooks["response"].append(tracing_response_hook)
 db = SqliteDatabase("data/db.db")
 
 
@@ -208,6 +213,7 @@ def scrape_artists():
             )
 
 
+# FIXME: Handle request errors gracefully.
 def gather_comments(post_ids: list[int], batch_size: int = 200):
     comments = []
     response_limit = 1000

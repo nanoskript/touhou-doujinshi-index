@@ -5,8 +5,10 @@ from peewee import SqliteDatabase, Model, IntegerField, BlobField
 from playhouse.sqlite_ext import JSONField
 from bs4 import BeautifulSoup
 
-from .utility import HEADERS
+from .utility import HEADERS, tracing_response_hook
 
+requests = requests.Session()
+requests.hooks["response"].append(tracing_response_hook)
 db = SqliteDatabase("data/eh.db")
 
 

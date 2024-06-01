@@ -8,9 +8,11 @@ import requests
 from peewee import SqliteDatabase, Model, BlobField, CharField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 
-from .utility import HEADERS, create_thumbnail
+from .utility import HEADERS, create_thumbnail, tracing_response_hook
 
 BASE_URL = "https://api.mangadex.org"
+requests = requests.Session()
+requests.hooks["response"].append(tracing_response_hook)
 db = SqliteDatabase("data/md.db")
 
 

@@ -7,11 +7,12 @@ from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField, Fo
 from playhouse.sqlite_ext import JSONField
 from requests.adapters import Retry, HTTPAdapter
 
-from .utility import HEADERS, create_thumbnail
+from .utility import HEADERS, create_thumbnail, tracing_response_hook
 
 s = requests.Session()
-retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
 s.mount("https://", HTTPAdapter(max_retries=retries))
+s.hooks["response"].append(tracing_response_hook)
 db = SqliteDatabase("data/ds.db")
 
 

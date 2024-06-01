@@ -7,9 +7,11 @@ from peewee import SqliteDatabase, Model, IntegerField
 from playhouse.sqlite_ext import JSONField
 
 from scripts.source_db import DBEntry, db_pixiv_id
-from scripts.utility import HEADERS
+from scripts.utility import HEADERS, tracing_response_hook
 
 db = SqliteDatabase("data/px.db")
+requests = requests.Session()
+requests.hooks["response"].append(tracing_response_hook)
 REQUEST_DELAY_SECONDS = 2.5
 
 
