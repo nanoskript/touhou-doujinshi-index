@@ -1,5 +1,4 @@
 import dataclasses
-import datetime
 import io
 import json
 import math
@@ -8,6 +7,7 @@ from typing import Optional
 
 import peewee
 import timeago
+from PIL import Image
 from dateutil.relativedelta import relativedelta
 from flask import Flask, render_template, send_file, request, url_for, make_response
 from peewee import fn
@@ -468,7 +468,8 @@ def route_book(key: str):
 @app.route("/thumbnail/<key>.jpg")
 def route_thumbnail(key: str):
     data = IndexThumbnail.get_by_id(key).data
-    return send_file(io.BytesIO(data), mimetype="octet-stream")
+    mime = Image.MIME[Image.open(io.BytesIO(data)).format]
+    return send_file(io.BytesIO(data), mimetype=mime)
 
 
 @app.route("/about")
