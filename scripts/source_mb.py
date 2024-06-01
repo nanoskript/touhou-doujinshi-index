@@ -11,7 +11,7 @@ from urllib3.util import create_urllib3_context
 import urllib.parse
 from lxml import etree
 
-from .utility import strain_html
+from .utility import strain_html, get_with_proxy
 
 # Outdated cipher is being used.
 CIPHER = "ALL:@SECLEVEL=1"
@@ -135,8 +135,9 @@ def source_mb():
     page_number = 1
     while True:
         print(f"[page] {page_number}")
-        response = get(
+        response = get_with_proxy(
             "https://www.melonbooks.co.jp/tags/index.php",
+            retries=10,
             params={
                 "genre": "東方Project",
                 "fromagee_flg": 0,
@@ -173,7 +174,7 @@ def source_mb():
                 thumbnail = get(thumbnail_url).content
 
             detail_url = "https://www.melonbooks.co.jp/detail/detail.php"
-            data = get(detail_url, params={"product_id": product_id}).content
+            data = get_with_proxy(detail_url, retries=10, params={"product_id": product_id}).content
             MBEntry.create(
                 id=product_id,
                 data=data,

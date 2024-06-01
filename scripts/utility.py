@@ -52,7 +52,7 @@ def strain_html(html: str, tag: str, pattern: str) -> str:
     return html[start:position]
 
 
-def get_with_proxy(url: str, retries: int, params: dict[str, str] = None):
+def get_with_proxy(url: str, retries: int, params: dict[str, str | int] = None):
     attempt = 0
     while attempt < retries:
         response = requests.get(
