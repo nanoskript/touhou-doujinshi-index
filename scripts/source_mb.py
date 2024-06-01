@@ -137,6 +137,7 @@ def source_mb():
         print(f"[page] {page_number}")
         response = get_with_proxy(
             "https://www.melonbooks.co.jp/tags/index.php",
+            with_browser=True,
             retries=10,
             params={
                 "genre": "東方Project",
@@ -173,8 +174,13 @@ def source_mb():
             if "image" in thumbnail_query:
                 thumbnail = get(thumbnail_url).content
 
-            detail_url = "https://www.melonbooks.co.jp/detail/detail.php"
-            data = get_with_proxy(detail_url, retries=10, params={"product_id": product_id}).content
+            data = get_with_proxy(
+                "https://www.melonbooks.co.jp/detail/detail.php",
+                with_browser=True,
+                retries=10,
+                params={"product_id": product_id}
+            ).content
+
             MBEntry.create(
                 id=product_id,
                 data=data,

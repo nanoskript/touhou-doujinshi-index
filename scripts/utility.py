@@ -53,24 +53,30 @@ def strain_html(html: str, tag: str, pattern: str) -> str:
     return html[start:position]
 
 
-def get_with_proxy(url: str, retries: int, params: dict[str, str | int] = None):
+def get_with_proxy(url: str, retries: int, params: dict[str, str | int] = None, with_browser: bool = False):
     attempt = 0
     while attempt < retries:
+        params = {
+            "url": f"{url}?{urlencode(params or {})}",
+            "x-api-key": os.environ["SCRAPINGANT_API_KEY"],
+        }
+
+        if with_browser:
+            params["return_page_source"] = "true"
+        else:
+            params["browser"] = "false"
+
         response = requests.get(
             "https://api.scrapingant.com/v2/general",
-            params={
-                "url": f"{url}?{urlencode(params or {})}",
-                "x-api-key": os.environ["SCRAPINGANT_API_KEY"],
-                "browser": "false",
-            }
+            params=params
         )
 
         if response.status_code == 200:
             return response
 
         attempt += 1
-        print(f"[retry/{response.status_code}] {url}")
-    raise ValueError(f"Failed to fetch: {url}")
+        print(f"[retry/{response.status_code}] {params['url']}")
+    raise ValueError(f"Failed to fetch: {params['url']}")
 
 
 def tracing_response_hook(response: requests.Response, *_args, **_kwargs):
