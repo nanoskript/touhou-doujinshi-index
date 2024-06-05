@@ -73,7 +73,12 @@ def mb_entries() -> list[MBDataEntry]:
         release_date = None
         release_date_key = "発行日"
         if release_date_key in table:
-            release_date = datetime.strptime(table[release_date_key], "%Y/%m/%d")
+            for format in ["%Y/%m/%d", "%d/%m/%Y"]:
+                try:
+                    release_date = datetime.strptime(table[release_date_key], format)
+                    break
+                except ValueError:
+                    pass
 
         pages = None
         pages_key = "総ページ数・CG数・曲数"
