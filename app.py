@@ -152,11 +152,15 @@ def inject_template_globals():
     return dict(database_last_modified=database_last_modified())
 
 
+# FIXME: Simplify this query builder.
 def build_full_query(
     title_tokens: list[str],
     must_include_tags: list[str],
+    must_exclude_tags: list[str],
     must_include_characters: list[str],
+    must_exclude_characters: list[str],
     must_include_artists: list[str],
+    must_exclude_artists: list[str],
     exclude_on_sources: list[str],
     exclude_on_language: str | None,
     include_metadata_only: bool,
@@ -191,17 +195,35 @@ def build_full_query(
                           .where(IndexBookTag.tag.contains(tag)))
         query = query.where(IndexBook.id << books_with_tag)
 
+    for tag in must_exclude_tags:
+        books_with_tag = (IndexBook.select()
+                          .join(IndexBookTag)
+                          .where(IndexBookTag.tag.contains(tag)))
+        query = query.where(~(IndexBook.id << books_with_tag))
+
     for character in must_include_characters:
         books_with_character = (IndexBook.select()
                                 .join(IndexBookCharacter)
                                 .where(IndexBookCharacter.character.contains(character)))
         query = query.where(IndexBook.id << books_with_character)
 
+    for character in must_exclude_characters:
+        books_with_character = (IndexBook.select()
+                                .join(IndexBookCharacter)
+                                .where(IndexBookCharacter.character.contains(character)))
+        query = query.where(~(IndexBook.id << books_with_character))
+
     for artist in must_include_artists:
         books_with_artist = (IndexBook.select()
                              .join(IndexBookArtist)
                              .where(IndexBookArtist.artist.contains(artist)))
         query = query.where(IndexBook.id << books_with_artist)
+
+    for artist in must_exclude_artists:
+        books_with_artist = (IndexBook.select()
+                             .join(IndexBookArtist)
+                             .where(IndexBookArtist.artist.contains(artist)))
+        query = query.where(~(IndexBook.id << books_with_artist))
 
     for source in exclude_on_sources:
         books_with_source = (IndexBook.select()
@@ -282,8 +304,11 @@ def route_index():
     query = build_full_query(
         title_tokens=query.get("title", []),
         must_include_tags=query.get("tag", []),
+        must_exclude_tags=query.get("-tag", []),
         must_include_characters=query.get("character", []),
+        must_exclude_characters=query.get("-character", []),
         must_include_artists=query.get("artist", []),
+        must_exclude_artists=query.get("-artist", []),
         exclude_on_sources=request.args.getlist("exclude_on_source"),
         exclude_on_language=request.args.get("exclude_on_language", None),
         include_metadata_only=("include_metadata_only" in request.args),
@@ -358,18 +383,24 @@ def route_autocomplete():
             return {category: suggestions[category.lower()]}
         return suggestions
 
-    # Try all suffixes for autocompletion.
+    # Try all candidate suffixes for autocompletion.
     q = request.args.get("q", "")
     tokens = q.split()
     all_suggestions = defaultdict(dict)
     for start in range(len(tokens)):
-        suffix = " ".join(tokens[start:])
-        for kind, terms in suggestions_for_string(suffix).items():
+        candidate = " ".join(tokens[start:])
+        suggestions = suggestions_for_string(candidate.removeprefix("-"))
+        for kind, terms in suggestions.items():
             for term in terms:
-                if term not in all_suggestions[kind]:
-                    query = f"{kind}:{encode_query_term(term)}"
-                    suggestion = " ".join(tokens[:start] + [query])
-                    all_suggestions[kind][term] = suggestion
+                if term in all_suggestions[kind]:
+                    continue
+
+                query = f"{kind}:{encode_query_term(term)}"
+                if candidate.startswith("-"):
+                    query = f"-{query}"
+
+                suggestion = " ".join(tokens[:start] + [query])
+                all_suggestions[kind][term] = suggestion
 
     return [(kind.title(), term, query)
             for kind, suggestions in all_suggestions.items()
