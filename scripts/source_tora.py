@@ -38,65 +38,72 @@ class ToraDataEntry:
     thumbnail: bytes
 
 
-def tora_entries() -> list[ToraDataEntry]:
-    entries = []
+def parse_tora_entry(entry) -> ToraDataEntry:
     select_table_rows = CSSSelector("tr")
     select_comments = CSSSelector(".product-detail-comment-item")
+    title = strain_html(entry.data, "h1", '<h1 class="product-detail-desc-title">')
+    title = etree.tostring(etree.HTML(title), method="text", encoding="unicode").strip()
+
+    table_text, table_nodes = {}, {}
+    details = strain_html(entry.data, "div", '<div class="product-detail-spec">')
+    for row in select_table_rows(etree.HTML(details)):
+        header, value = row.getchildren()
+        header = etree.tostring(header, method="text", encoding="unicode").strip()
+        text = etree.tostring(value, method="text", encoding="unicode").strip()
+        table_nodes[header] = value
+        table_text[header] = text
+
+    release_date = None
+    for release_date_key in ["発行日", "公開日"]:
+        if release_date_key in table_text:
+            release_date = datetime.strptime(table_text[release_date_key], "%Y/%m/%d")
+
+    pages = None
+    pages_key = "種別/サイズ"
+    if pages_key in table_text:
+        tokens = table_text[pages_key].split()
+        if tokens[-1].endswith("p"):
+            pages = int(tokens[-1][:-1])
+
+    comments = []
+    description = strain_html(entry.data, "div", '<div class="product-detail-comment">')
+    for comment in select_comments(etree.HTML(description)):
+        heading = comment.find("h3")
+        content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
+        comments.append(f"<b>{heading.text}</b>\n{content}")
+
+    def link_text_by_table_key(key: str):
+        link_text = []
+        if key in table_nodes:
+            for link in table_nodes[key].findall(".//a"):
+                if link.attrib["href"] != "#":
+                    string = etree.tostring(link, method="text", encoding="unicode")
+                    link_text.append(string.strip())
+        return link_text
+
+    return ToraDataEntry(
+        id=entry.id,
+        title=title,
+        pages=pages,
+        release_date=release_date,
+        comments=("".join(comments)),
+        pairings=[frozenset(re.split("[×＋]", tag))
+                  for tag in link_text_by_table_key("カップリング")
+                  for tag in tag.split("、")],
+        characters=link_text_by_table_key("メインキャラ"),
+        circles=link_text_by_table_key("サークル名"),
+        authors=link_text_by_table_key("作家"),
+        thumbnail=entry.thumbnail,
+    )
+
+
+def tora_entries() -> list[ToraDataEntry]:
+    entries = []
     for entry in ToraEntry.select():
-        title = strain_html(entry.data, "h1", '<h1 class="product-detail-desc-title">')
-        title = etree.tostring(etree.HTML(title), method="text", encoding="unicode").strip()
-
-        table_text, table_nodes = {}, {}
-        details = strain_html(entry.data, "div", '<div class="product-detail-spec">')
-        for row in select_table_rows(etree.HTML(details)):
-            header, value = row.getchildren()
-            header = etree.tostring(header, method="text", encoding="unicode").strip()
-            text = etree.tostring(value, method="text", encoding="unicode").strip()
-            table_nodes[header] = value
-            table_text[header] = text
-
-        release_date = None
-        for release_date_key in ["発行日", "公開日"]:
-            if release_date_key in table_text:
-                release_date = datetime.strptime(table_text[release_date_key], "%Y/%m/%d")
-
-        pages = None
-        pages_key = "種別/サイズ"
-        if pages_key in table_text:
-            tokens = table_text[pages_key].split()
-            if tokens[-1].endswith("p"):
-                pages = int(tokens[-1][:-1])
-
-        comments = []
-        description = strain_html(entry.data, "div", '<div class="product-detail-comment">')
-        for comment in select_comments(etree.HTML(description)):
-            heading = comment.find("h3")
-            content = etree.tostring(heading.getnext(), method="html", encoding="unicode")
-            comments.append(f"<b>{heading.text}</b>\n{content}")
-
-        def link_text_by_table_key(key: str):
-            link_text = []
-            if key in table_nodes:
-                for link in table_nodes[key].findall(".//a"):
-                    if link.attrib["href"] != "#":
-                        string = etree.tostring(link, method="text", encoding="unicode")
-                        link_text.append(string.strip())
-            return link_text
-
-        entries.append(ToraDataEntry(
-            id=entry.id,
-            title=title,
-            pages=pages,
-            release_date=release_date,
-            comments=("".join(comments)),
-            pairings=[frozenset(re.split("[×＋]", tag))
-                      for tag in link_text_by_table_key("カップリング")
-                      for tag in tag.split("、")],
-            characters=link_text_by_table_key("メインキャラ"),
-            circles=link_text_by_table_key("サークル名"),
-            authors=link_text_by_table_key("作家"),
-            thumbnail=entry.thumbnail,
-        ))
+        try:
+            entries.append(parse_tora_entry(entry))
+        except TypeError:
+            print(f"[product/parse/fail] {entry.id}")
     return entries
 
 
