@@ -10,7 +10,7 @@ from PIL import Image, ImageFile
 T = TypeVar("T")
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; TouhouIndexBot/0.1; +https://scarlet.nsk.sh)"
+    "User-Agent": "TouhouIndexBot/0.1 (+https://scarlet.nsk.sh)"
 }
 
 
