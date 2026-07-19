@@ -163,9 +163,8 @@ def all_md_chapters() -> list[MDEntry]:
 
 
 def manga_request(params):
-    return requests.get(
+    return request_with_retry(
         f"{BASE_URL}/manga",
-        headers=HEADERS,
         params=params + [
             ("title", "Touhou"),
             ("includes[]", "author"),
@@ -199,9 +198,8 @@ def scrape_manga():
             else:
                 print(f"[manga/new] {slug}")
 
-            covers = requests.get(
+            covers = request_with_retry(
                 f"{BASE_URL}/cover",
-                headers=HEADERS,
                 params={
                     "limit": limit,
                     "manga[]": slug,
@@ -224,9 +222,8 @@ def scrape_manga():
                 headers=HEADERS,
             ).content
 
-            chapters = requests.get(
-                url=f"{BASE_URL}/manga/{slug}/feed",
-                headers=HEADERS,
+            chapters = request_with_retry(
+                f"{BASE_URL}/manga/{slug}/feed",
                 params={"limit": 500},
             ).json()["data"]
 
@@ -248,9 +245,9 @@ def scrape_manga():
             manga.delete_instance()
 
 
-def request_with_retry(url):
+def request_with_retry(url, params=None):
     while True:
-        response = requests.get(url, headers=HEADERS)
+        response = requests.get(url, headers=HEADERS, params=params)
         if response.status_code == 429:
             print(f"[event/rate-limit] {url}")
             until = int(response.headers["X-RateLimit-Retry-After"])
