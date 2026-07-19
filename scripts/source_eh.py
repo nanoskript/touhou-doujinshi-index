@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from .date_time_utc_field import DateTimeUTCField
 from .utility import HEADERS, tracing_response_hook, utcnow
 
+REFRESH_COUNT = 100
 requests = requests.Session()
 requests.hooks["response"].append(tracing_response_hook)
 db = SqliteDatabase("data/eh.db")
@@ -110,10 +111,43 @@ def scrape_galleries():
         time.sleep(10)
 
 
+def refresh_entries():
+    gidlist = []
+    indexed = {}
+    for entry in EHEntry.select().order_by(EHEntry.last_fetched.asc()).limit(REFRESH_COUNT):
+        token = entry.data.get("token")
+        if token is None:
+            entry.last_fetched = utcnow()
+            entry.save()
+            print(f"[refresh/skip] {entry.gid}")
+            continue
+        gidlist.append([entry.gid, token])
+        indexed[entry.gid] = entry
+
+    try:
+        metadata = gallery_metadata(gidlist)
+    except Exception as error:
+        # Leave rows untouched so they retry next run.
+        print(f"[refresh/fail] {error}")
+        return
+
+    for gallery in metadata:
+        entry = indexed[gallery["gid"]]
+        if "error" in gallery:
+            # The gallery is gone: keep the stored data, only rotate it out.
+            print(f"[refresh/gone] {entry.gid}")
+        else:
+            entry.data = gallery
+            print(f"[refresh/update] {entry.gid}")
+        entry.last_fetched = utcnow()
+        entry.save()
+
+
 def main():
     db.connect()
     db.create_tables([EHEntry])
     scrape_galleries()
+    refresh_entries()
 
 
 if __name__ == '__main__':
