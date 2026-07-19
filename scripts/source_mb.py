@@ -11,7 +11,8 @@ from urllib3.util import create_urllib3_context
 import urllib.parse
 from lxml import etree
 
-from .utility import strain_html, get_with_proxy
+from .date_time_utc_field import DateTimeUTCField
+from .utility import strain_html, get_with_proxy, HEADERS, utcnow, OutOfCreditsError
 
 # Outdated cipher is being used.
 CIPHER = "ALL:@SECLEVEL=1"
@@ -36,10 +37,13 @@ class MBEntry(BaseModel):
     id = IntegerField(primary_key=True)
     data = CharField()
     thumbnail = BlobField(null=True)
+    last_fetched = DateTimeUTCField(null=True)
 
 
 session = requests.Session()
 session.mount("https://", CustomCipherAdapter())
+# The thumbnail CDN rejects the default python user agent.
+session.headers.update(HEADERS)
 
 
 @dataclasses.dataclass()
@@ -93,8 +97,10 @@ def mb_entries() -> list[MBDataEntry]:
 
         characters, authors, circles = [], [], []
         for link in select_links(tree):
-            href = link.attrib["href"]
+            href = link.attrib.get("href", "")
             text = link.text and link.text.strip()
+            if not text:
+                continue
 
             prefix = "https://www.melonbooks.co.jp/tags/index.php?chara="
             if href.startswith(prefix):
@@ -142,7 +148,8 @@ def source_mb():
         print(f"[page] {page_number}")
         response = get_with_proxy(
             "https://www.melonbooks.co.jp/tags/index.php",
-            with_browser=True,
+            # The site rejects requests from IP addresses outside Japan.
+            proxy_country="JP",
             retries=10,
             params={
                 "genre": "東方Project",
@@ -181,15 +188,21 @@ def source_mb():
 
             data = get_with_proxy(
                 "https://www.melonbooks.co.jp/detail/detail.php",
-                with_browser=True,
+                proxy_country="JP",
                 retries=10,
                 params={"product_id": product_id}
             ).content
+
+            # Skip error pages such as delisted products.
+            if b'<div class="item-page">' not in data:
+                print(f"[product/invalid] {product_id}")
+                continue
 
             MBEntry.create(
                 id=product_id,
                 data=data,
                 thumbnail=thumbnail,
+                last_fetched=utcnow(),
             )
 
         if not items:
@@ -200,7 +213,10 @@ def source_mb():
 def main():
     db.connect()
     db.create_tables([MBEntry])
-    source_mb()
+    try:
+        source_mb()
+    except OutOfCreditsError as e:
+        print(f"[credits/exhausted] {e}")
 
 
 if __name__ == '__main__':

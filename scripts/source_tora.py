@@ -9,7 +9,7 @@ from lxml.cssselect import CSSSelector
 from peewee import SqliteDatabase, Model, CharField, BlobField
 
 from scripts.date_time_utc_field import DateTimeUTCField
-from scripts.utility import get_with_proxy, strain_html, utcnow
+from scripts.utility import get_with_proxy, strain_html, utcnow, OutOfCreditsError
 
 db = SqliteDatabase("data/tora.db")
 
@@ -179,7 +179,10 @@ def source_tora():
 def main():
     db.connect()
     db.create_tables([ToraEntry])
-    source_tora()
+    try:
+        source_tora()
+    except OutOfCreditsError as e:
+        print(f"[credits/exhausted] {e}")
 
 
 if __name__ == '__main__':

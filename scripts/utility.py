@@ -58,30 +58,47 @@ def strain_html(html: str, tag: str, pattern: str) -> str:
     return html[start:position]
 
 
-def get_with_proxy(url: str, retries: int, params: dict[str, str | int] = None, with_browser: bool = False):
+class OutOfCreditsError(Exception):
+    pass
+
+
+def get_with_proxy(
+    url: str,
+    retries: int,
+    params: dict[str, str | int] = None,
+    with_browser: bool = False,
+    proxy_country: str = None,
+):
+    request_params = {
+        "url": f"{url}?{urlencode(params or {})}",
+        "x-api-key": os.environ["SCRAPINGANT_API_KEY"],
+    }
+
+    if with_browser:
+        request_params["return_page_source"] = "true"
+    else:
+        request_params["browser"] = "false"
+
+    if proxy_country:
+        request_params["proxy_country"] = proxy_country
+
     attempt = 0
     while attempt < retries:
-        params = {
-            "url": f"{url}?{urlencode(params or {})}",
-            "x-api-key": os.environ["SCRAPINGANT_API_KEY"],
-        }
-
-        if with_browser:
-            params["return_page_source"] = "true"
-        else:
-            params["browser"] = "false"
-
         response = requests.get(
             "https://api.scrapingant.com/v2/general",
-            params=params
+            params=request_params
         )
 
         if response.status_code == 200:
             return response
 
+        # ScrapingAnt returns 403 when the plan credit limit is reached.
+        if response.status_code == 403:
+            raise OutOfCreditsError(f"credits exhausted: {request_params['url']}")
+
         attempt += 1
-        print(f"[retry/{response.status_code}] {params['url']}")
-    raise ValueError(f"Failed to fetch: {params['url']}")
+        print(f"[retry/{response.status_code}] {request_params['url']}")
+    raise ValueError(f"Failed to fetch: {request_params['url']}")
 
 
 def tracing_response_hook(response: requests.Response, *_args, **_kwargs):
