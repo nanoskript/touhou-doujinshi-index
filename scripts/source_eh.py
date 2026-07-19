@@ -53,10 +53,25 @@ def gallery_artists(entry: EHEntry) -> list[str]:
     return artists
 
 
-def main():
-    db.connect()
-    db.create_tables([EHEntry])
+def gallery_metadata(gidlist: list) -> list[dict]:
+    # The gdata API accepts at most 25 gids per request.
+    metadata = []
+    for start in range(0, len(gidlist), 25):
+        if start:
+            time.sleep(1)
+        metadata += requests.post(
+            "https://api.e-hentai.org/api.php",
+            headers=HEADERS,
+            json={
+                "method": "gdata",
+                "gidlist": gidlist[start:start + 25],
+                "namespace": 1
+            }
+        ).json()["gmetadata"]
+    return metadata
 
+
+def scrape_galleries():
     latest = list(EHEntry.select().order_by(EHEntry.gid.desc()).limit(1))
     start_gid = latest[0].gid if latest else 1
     search_url = f"https://e-hentai.org/?f_search=parody:%22touhou+project%24%22&f_cats=767&prev={start_gid}"
@@ -74,17 +89,7 @@ def main():
         if not galleries:
             break
 
-        metadata = requests.post(
-            "https://api.e-hentai.org/api.php",
-            headers=HEADERS,
-            json={
-                "method": "gdata",
-                "gidlist": galleries,
-                "namespace": 1
-            }
-        ).json()["gmetadata"]
-
-        for gallery in metadata:
+        for gallery in gallery_metadata(galleries):
             gid = gallery["gid"]
             if EHEntry.select().where(EHEntry.gid == gid):
                 print(f"[gallery/skip] {gid}")
@@ -103,6 +108,12 @@ def main():
         # Delay for 10 seconds.
         search_url = previous_url_element.attrs.get("href", None)
         time.sleep(10)
+
+
+def main():
+    db.connect()
+    db.create_tables([EHEntry])
+    scrape_galleries()
 
 
 if __name__ == '__main__':
