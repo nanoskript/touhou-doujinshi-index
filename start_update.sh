@@ -8,9 +8,8 @@ run() {
   run source_db;
   run source_ds;
   run source_md;
-  run source_tora;
-  # Runs after toranoana so daily sources have credit priority.
   run source_mb;
+  run source_tora;
   # run source_px;
   run build_image_hashes &&
   run build_index &&
