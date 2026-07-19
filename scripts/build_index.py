@@ -322,6 +322,9 @@ def main():
         IndexLanguage.bulk_create(all_language_models)
         IndexEntry.bulk_create(entries.values(), batch_size)
 
+    # Fold the WAL into the database so the file mtime reflects this run.
+    db.execute_sql("PRAGMA wal_checkpoint(TRUNCATE)")
+
 
 if __name__ == '__main__':
     main()

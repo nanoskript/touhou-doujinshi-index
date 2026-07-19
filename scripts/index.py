@@ -6,7 +6,10 @@ from peewee import SqliteDatabase, Model, CharField, BlobField, IntegerField, Fo
 from .date_time_utc_field import DateTimeUTCField
 
 DATABASE_PATH = "data/index.db"
-db = SqliteDatabase(DATABASE_PATH)
+db = SqliteDatabase(DATABASE_PATH, pragmas={
+    "journal_mode": "wal",
+    "busy_timeout": 5000,
+})
 
 
 def database_last_modified() -> datetime.datetime:
