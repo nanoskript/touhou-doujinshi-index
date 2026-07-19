@@ -565,5 +565,13 @@ def handle_database_error(_e):
     ), 503
 
 
+@app.errorhandler(peewee.DoesNotExist)
+def handle_missing_record(_e):
+    return render_template(
+        "error.html",
+        message="This page does not exist.",
+    ), 404
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, threaded=True)
