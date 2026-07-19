@@ -5,7 +5,8 @@ from peewee import SqliteDatabase, Model, IntegerField, BlobField
 from playhouse.sqlite_ext import JSONField
 from bs4 import BeautifulSoup
 
-from .utility import HEADERS, tracing_response_hook
+from .date_time_utc_field import DateTimeUTCField
+from .utility import HEADERS, tracing_response_hook, utcnow
 
 requests = requests.Session()
 requests.hooks["response"].append(tracing_response_hook)
@@ -21,6 +22,7 @@ class EHEntry(BaseModel):
     gid = IntegerField(primary_key=True)
     data = JSONField()
     thumbnail = BlobField()
+    last_fetched = DateTimeUTCField(null=True)
 
 
 def filter_eh_entries():
@@ -91,7 +93,7 @@ def main():
             print(f"[gallery/new] {gid}")
             thumbnail_url = gallery["thumb"].replace("l.jpg", "300.jpg")
             thumbnail = requests.get(thumbnail_url, headers=HEADERS).content
-            EHEntry.create(gid=gid, data=gallery, thumbnail=thumbnail)
+            EHEntry.create(gid=gid, data=gallery, thumbnail=thumbnail, last_fetched=utcnow())
             time.sleep(1)
 
         previous_url_element = html.find("a", attrs={"id": "uprev"})

@@ -8,7 +8,8 @@ import requests
 from peewee import SqliteDatabase, Model, BlobField, CharField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 
-from .utility import HEADERS, create_thumbnail, tracing_response_hook
+from .date_time_utc_field import DateTimeUTCField
+from .utility import HEADERS, create_thumbnail, tracing_response_hook, utcnow
 
 BASE_URL = "https://api.mangadex.org"
 requests = requests.Session()
@@ -27,6 +28,7 @@ class MDManga(BaseModel):
     covers = JSONField()
     chapters = JSONField()
     thumbnail = BlobField()
+    last_fetched = DateTimeUTCField(null=True)
 
 
 class MDChapter(BaseModel):
@@ -232,7 +234,8 @@ def scrape_manga():
                 data=entry,
                 covers=covers,
                 chapters=chapters,
-                thumbnail=thumbnail
+                thumbnail=thumbnail,
+                last_fetched=utcnow(),
             )
 
         # Slide offset.

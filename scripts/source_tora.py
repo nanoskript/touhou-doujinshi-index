@@ -8,7 +8,8 @@ from lxml import etree
 from lxml.cssselect import CSSSelector
 from peewee import SqliteDatabase, Model, CharField, BlobField
 
-from scripts.utility import get_with_proxy, strain_html
+from scripts.date_time_utc_field import DateTimeUTCField
+from scripts.utility import get_with_proxy, strain_html, utcnow
 
 db = SqliteDatabase("data/tora.db")
 
@@ -22,6 +23,7 @@ class ToraEntry(BaseModel):
     id = CharField(primary_key=True)
     data = CharField()
     thumbnail = BlobField(null=True)
+    last_fetched = DateTimeUTCField(null=True)
 
 
 @dataclasses.dataclass()
@@ -166,6 +168,7 @@ def source_tora():
                     id=product_id,
                     data=data,
                     thumbnail=thumbnail,
+                    last_fetched=utcnow(),
                 )
 
             if not items:

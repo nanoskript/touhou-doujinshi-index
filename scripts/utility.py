@@ -1,3 +1,4 @@
+import datetime
 import io
 import os
 from typing import TypeVar
@@ -12,6 +13,10 @@ T = TypeVar("T")
 HEADERS = {
     "User-Agent": "TouhouIndexBot/0.1 (+https://scarlet.nsk.sh)"
 }
+
+
+def utcnow() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def deduplicate_by_identity(xs: list[T]) -> list[T]:

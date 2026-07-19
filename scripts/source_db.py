@@ -6,7 +6,8 @@ from playhouse.sqlite_ext import JSONField
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
-from .utility import HEADERS, tracing_response_hook
+from .date_time_utc_field import DateTimeUTCField
+from .utility import HEADERS, tracing_response_hook, utcnow
 
 requests = requests.Session()
 retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[429])
@@ -25,6 +26,7 @@ class DBEntry(BaseModel):
     data = JSONField()
     posts = JSONField()
     thumbnail = BlobField()
+    last_fetched = DateTimeUTCField(null=True)
 
 
 class DBArtist(BaseModel):
@@ -173,6 +175,7 @@ def scrape_pools():
             data=data,
             posts=posts,
             thumbnail=thumbnail,
+            last_fetched=utcnow(),
         )
 
 

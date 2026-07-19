@@ -7,7 +7,8 @@ from peewee import SqliteDatabase, Model, BlobField, CharField, IntegerField, Fo
 from playhouse.sqlite_ext import JSONField
 from requests.adapters import Retry, HTTPAdapter
 
-from .utility import HEADERS, create_thumbnail, tracing_response_hook
+from .date_time_utc_field import DateTimeUTCField
+from .utility import HEADERS, create_thumbnail, tracing_response_hook, utcnow
 
 s = requests.Session()
 retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
@@ -25,6 +26,7 @@ class DSEntry(BaseModel):
     slug = CharField(primary_key=True)
     data = JSONField()
     thumbnail = BlobField()
+    last_fetched = DateTimeUTCField(null=True)
 
 
 class DSTopic(BaseModel):
@@ -130,6 +132,7 @@ def scrape_entries():
                 slug=slug,
                 data=chapter_data,
                 thumbnail=thumbnail_data,
+                last_fetched=utcnow(),
             )
 
 
