@@ -177,7 +177,7 @@ def entry_url(entry: Entry) -> str | None:
     if isinstance(entry, MBDataEntry):
         return f"https://www.melonbooks.co.jp/detail/detail.php?product_id={entry.id}"
     if isinstance(entry, ToraDataEntry):
-        return f"https://ecs.toranoana.jp/tora/ec/item/{entry.id}/"
+        return entry.url
     if isinstance(entry, PXEntry):
         return f"https://www.pixiv.net/artworks/{entry.id}"
 

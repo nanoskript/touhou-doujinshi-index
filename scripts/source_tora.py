@@ -27,6 +27,7 @@ class ToraEntry(BaseModel):
 @dataclasses.dataclass()
 class ToraDataEntry:
     id: str
+    url: str
     title: str
     pages: int
     release_date: datetime
@@ -42,7 +43,16 @@ def parse_tora_entry(entry) -> ToraDataEntry:
     select_table_rows = CSSSelector("tr")
     select_comments = CSSSelector(".product-detail-comment-item")
     title = strain_html(entry.data, "h1", '<h1 class="product-detail-desc-title">')
-    title = etree.tostring(etree.HTML(title), method="text", encoding="unicode").strip()
+    title = etree.HTML(title)
+    if title is None:
+        # Fail gracefully on non-product pages such as error or age-gate pages.
+        raise ValueError(f"missing product detail for entry {entry.id}")
+    title = etree.tostring(title, method="text", encoding="unicode").strip()
+
+    # The canonical link carries the correct store path for both the
+    # physical `tora/ec` and digital `tora_d/digi` stores.
+    canonical = re.search(r'rel="canonical" href="([^"]+)"', entry.data)
+    url = canonical.group(1) if canonical else f"https://ecs.toranoana.jp/tora/ec/item/{entry.id}/"
 
     table_text, table_nodes = {}, {}
     details = strain_html(entry.data, "div", '<div class="product-detail-spec">')
@@ -83,6 +93,7 @@ def parse_tora_entry(entry) -> ToraDataEntry:
 
     return ToraDataEntry(
         id=entry.id,
+        url=url,
         title=title,
         pages=pages,
         release_date=release_date,
@@ -102,7 +113,7 @@ def tora_entries() -> list[ToraDataEntry]:
     for entry in ToraEntry.select():
         try:
             entries.append(parse_tora_entry(entry))
-        except TypeError:
+        except (TypeError, ValueError):
             print(f"[product/parse/fail] {entry.id}")
     return entries
 
@@ -135,7 +146,8 @@ def source_tora():
             items = html.find_all(attrs={"class": "product-list-item"})
             for item in items:
                 link = item.find("a", attrs={"class": "product-list-img-inn"})
-                product_id = link.attrs["href"].split("/")[-2]
+                product_path = link.attrs["href"]
+                product_id = product_path.split("/")[-2]
                 image_url = item.find("img").attrs["data-src"]
                 print(f"[product] {product_id}")
 
@@ -146,7 +158,9 @@ def source_tora():
 
                 # FIXME: Handle empty thumbnail.
                 thumbnail = requests.get(image_url).content
-                product_url = f"https://ecs.toranoana.jp/tora/ec/item/{product_id}/"
+                # The listing link carries the correct store path; a hardcoded
+                # `/tora/ec/item/` path 404s digital items.
+                product_url = f"https://ecs.toranoana.jp{product_path}"
                 data = get_with_proxy(product_url, retries=10).content
                 ToraEntry.create(
                     id=product_id,
