@@ -6,7 +6,7 @@
   # pdm run python3 -u -m scripts.source_mb;
   pdm run python3 -u -m scripts.source_tora;
   # pdm run python3 -u -m scripts.source_px;
-  pdm run python3 -u -m scripts.build_image_hashes;
-  pdm run python3 -u -m scripts.build_index;
+  pdm run python3 -u -m scripts.build_image_hashes &&
+  pdm run python3 -u -m scripts.build_index &&
   pdm run python3 -u -m scripts.collate_statistics;
 } &> data/update.log
