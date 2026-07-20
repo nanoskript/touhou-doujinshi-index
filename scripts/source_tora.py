@@ -164,6 +164,12 @@ def source_tora():
                 # `/tora/ec/item/` path 404s digital items.
                 product_url = f"https://ecs.toranoana.jp{product_path}"
                 data = get_with_proxy(product_url, retries=10).content
+
+                # Skip error pages such as access-error or age-gate pages.
+                if b'<h1 class="product-detail-desc-title">' not in data:
+                    print(f"[product/invalid] {product_id}")
+                    continue
+
                 ToraEntry.create(
                     id=product_id,
                     data=data,
