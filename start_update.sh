@@ -3,6 +3,8 @@ run() {
   pdm run python3 -u -m "scripts.$1"
 }
 
+# Detached: Coolify kills the task's ssh session after 1h and retries it,
+# spawning concurrent runs (coollabsio/coolify#8435).
 {
   run source_eh;
   run source_db;
@@ -15,4 +17,6 @@ run() {
   run build_index &&
   run collate_statistics;
   echo "[stage] end $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} &> data/update.log
+} &> data/update.log < /dev/null &
+
+echo "[detached] update running, follow data/update.log"
